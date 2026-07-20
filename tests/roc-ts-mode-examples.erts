@@ -49,27 +49,6 @@ main! = |_args| {
 }
 =-=-=
 
-Name: with-comments
-Skip: t
-=-=
-app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
-
-import pf.Stdout
-import pf.Task
-
-# this is a comment
-main! = |_args| {
-	# second comment
-	z = "hi"
-	# third comment
-	obj = 
-	# fourth comment
-		{ a: "hi\n" }
-	q = obj.a
-	Stdout.line!("hi")
-}
-=-=-=
-
 Name: types
 =-=
 app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
@@ -77,7 +56,7 @@ app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/downl
 import pf.Stdout
 import pf.Task
 
-main : Int(q, zib), Int(q, { a : Int, b : Int(_) => Int }) -> [False((Int(q) -> zabl)), True]
+main! : Int(q, zib), Int(q, { a : Int, b : Int(_) => Int }) -> [False((Int(q) -> zabl)), True]
 main! = |_args| {
 	z = "hi"
 	obj = 
@@ -98,7 +77,7 @@ app [
 import pf.Stdout
 import pf.Task
 
-main :
+main! :
 	Int(
 		q,
 		zib,
@@ -112,48 +91,6 @@ main :
 	) ->
 		[
 			False,
-		]
-main! = |_args| {
-	z = "hi"
-	obj = 
-		{ a: "hi\n" }
-	q = obj.a
-	Stdout.line!("hi")
-}
-=-=-=
-
-Name: split-lines-2
-Skip: t
-=-=
-app [
-	main,
-] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br",
-}
-
-import pf.Stdout
-import pf.Task
-
-main :
-	Int(
-		q,
-		zib,
-	),
-	Int(
-		qq,
-		{
-			a : Int,
-			b : Int(_) => Int,
-		},
-	) ->
-		[
-			False(
-				(
-					Int(
-						qqq,
-					) ->
-						zabl),
-					),
 		]
 main! = |_args| {
 	z = "hi"
@@ -214,17 +151,45 @@ f = |z| match List.get(nfa, state_ind) {
 }
 =-=-=
 
-Name: or-pattern2
-Skip: t
+Name: if-else
 =-=
 app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
-f : Something -> Something
-f = |z| match List.get(nfa, state_ind) {
-	Ok(A(b, c)) => A(c, b)
-	Ok(_)
-	| Ok(_)
-	| Err(_) =>
-		Ok(32)
+implement_me_later : Str -> Str
+implement_me_later = |str| {
+	if str == "" {
+		str
+	} else {
+		crash "not implemented"
 	}
+}
+=-=-=
+
+Name: for-loop
+=-=
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
+
+for_loop = |num_list| {
+	var $sum = 0
+
+	for num in num_list {
+		$sum = $sum + num
+	}
+
+	$sum
+}
+=-=-=
+
+Name: match-expression
+=-=
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
+
+simple_match : [Red, Green, Blue, BabyBlue] -> Str
+simple_match = |color| {
+	match color {
+		Red => "The color is red."
+		Green => "The color is green."
+		Blue | BabyBlue => "The color is blue."
+	}
+}
 =-=-=

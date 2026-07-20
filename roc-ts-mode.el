@@ -166,32 +166,26 @@ Uses `treesit-install-language-grammar'."
     :override t
     :feature keywords
     ((where) @font-lock-keyword-face
-     ;(implements) @font-lock-keyword-face
-     ;(when) @font-lock-keyword-face
-     ;(is) @font-lock-keyword-face
      (exposing) @font-lock-keyword-face
+     (match) @font-lock-keyword-face
      "if" @font-lock-keyword-face
-     ;"then" @font-lock-keyword-face
-     ;"else" @font-lock-keyword-face
+     "else" @font-lock-keyword-face
+     "for" @font-lock-keyword-face
+     "in" @font-lock-keyword-face
+     "var" @font-lock-keyword-face
+     "return" @font-lock-keyword-face
      "as" @font-lock-keyword-face
+     (as) @font-lock-keyword-face
      "dbg" @font-lock-keyword-face
      "expect" @font-lock-keyword-face
-     ;; "expect-fx" @font-lock-keyword-face
-     ;; "crash" @font-lock-keyword-face
-     ;; "interface" @font-lock-keyword-face
      "app" @font-lock-keyword-face
      "package" @font-lock-keyword-face
      "platform" @font-lock-keyword-face
      "module" @font-lock-keyword-face
-     ;; "hosted" @font-lock-keyword-face
      "exposes" @font-lock-keyword-face
-     ;"imports" @font-lock-keyword-face
      "import" @font-lock-keyword-face
-     ;; "with" @font-lock-keyword-face
-     ;; "generates" @font-lock-keyword-face
      "packages" @font-lock-keyword-face
      "requires" @font-lock-keyword-face
-     ;; "to" @font-lock-keyword-face
      "provides" @font-lock-keyword-face)
 
     :language roc
@@ -204,7 +198,6 @@ Uses `treesit-install-language-grammar'."
     :override t
     :feature types
     ((inferred) @font-lock-type-face)
-     ;(ability) @font-lock-type-face)
 
     :language roc
     :override t
@@ -319,6 +312,31 @@ Uses `treesit-install-language-grammar'."
 This is passed to `treesit-font-lock-rules' and assigned to
 `treesit-font-lock-settings' in `roc-ts--ts-setup'.")
 
+(defconst roc-ts--ts-conditional-keyword-patterns
+  '("while" (break_expr) "crash")
+  "Font-lock keyword patterns not present in all tree-sitter-roc grammars.
+Each is checked against the installed grammar when the mode starts and
+dropped if the grammar doesn't have it, so the mode keeps working with
+grammars from before these keywords were added.")
+
+(defun roc-ts--ts-conditional-keyword-rules ()
+  "Font-lock rules for the grammar-supported conditional keyword patterns.
+Returns a plist fragment in the format of `roc-ts--ts-font-lock-rules',
+or nil if the grammar supports none of the patterns."
+  (when-let* ((patterns
+               (seq-filter
+                (lambda (pattern)
+                  (ignore-errors
+                    (treesit-query-compile
+                     'roc (list pattern '@font-lock-keyword-face) t)))
+                roc-ts--ts-conditional-keyword-patterns)))
+    (list :language 'roc
+          :override t
+          :feature 'keywords
+          (mapcan (lambda (pattern)
+                    (list pattern '@font-lock-keyword-face))
+                  patterns))))
+
 (defun roc-ts--indent-offset (&rest _)
   (or roc-ts-indent-offset
       tab-width))
@@ -360,9 +378,9 @@ This is assigned to an entry of `treesit-simple-indent-rules'.")
 
 (defconst roc-ts--next-line-further-indent-regex
   (rx (group
-       (or "=" "[" "{" "(" "->" "=>" "|" ":" "expect-fx"
+       (or "=" "[" "{" "(" "->" "=>" "|" ":"
            (seq word-start
-                (or "is" "then" "else" "expect" "where" "dbg" "app" "package" "platform" "module" "exposes" "imports" "import" "with" "packages" "requires" "provides")
+                (or "else" "expect" "where" "dbg" "app" "package" "platform" "module" "exposes" "import" "packages" "requires" "provides")
                 word-end)))
       (*? (syntax whitespace))
       (? "#" (* not-newline))
@@ -482,7 +500,9 @@ This is assigned to `treesit-defun-name-function'."
   ;; TODO: There is a highlight.scm file in the tree-sitter-roc codebase. How can I use it?
 
   (setq-local treesit-font-lock-settings
-              (apply #'treesit-font-lock-rules roc-ts--ts-font-lock-rules))
+              (apply #'treesit-font-lock-rules
+                     (append roc-ts--ts-font-lock-rules
+                             (roc-ts--ts-conditional-keyword-rules))))
 
   (setq-local treesit-font-lock-feature-list
               '((comments doc-comments definition-names)

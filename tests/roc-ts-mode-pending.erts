@@ -1,0 +1,97 @@
+This file holds indentation test cases that are known-broken and are NOT
+run by the test suite (nothing references this file from roc-ts-mode-test.el).
+
+These blocks used to live in roc-ts-mode-examples.erts marked "Skip: t".
+They were moved here for two reasons:
+
+1. They were written against a previous tree-sitter-roc grammar / an older
+   era of Roc syntax, and the mode does not indent them correctly yet.
+
+2. Emacs 30.1's `ert-test-erts-file' mis-parses "Skip: t" blocks: the skip
+   path in `ert-test--erts-test' consumes the closing "=-=-=" delimiter,
+   but the caller then searches for that same delimiter again. As a result
+   every skipped block silently disables the test that follows it, and a
+   skipped block at the end of the file aborts the whole run with a
+   search-failed error. (This is what made the erts suite fail wholesale
+   while or-pattern2 sat at the end of the examples file.)
+
+To revive one of these cases, fix the indentation behavior it documents and
+move the block back into roc-ts-mode-examples.erts WITHOUT a "Skip: t" line.
+
+Name: with-comments
+Skip: t
+=-=
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
+
+import pf.Stdout
+import pf.Task
+
+# this is a comment
+main! = |_args| {
+	# second comment
+	z = "hi"
+	# third comment
+	obj = 
+	# fourth comment
+		{ a: "hi\n" }
+	q = obj.a
+	Stdout.line!("hi")
+}
+=-=-=
+
+Name: split-lines-2
+Skip: t
+=-=
+app [
+	main,
+] {
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br",
+}
+
+import pf.Stdout
+import pf.Task
+
+main :
+	Int(
+		q,
+		zib,
+	),
+	Int(
+		qq,
+		{
+			a : Int,
+			b : Int(_) => Int,
+		},
+	) ->
+		[
+			False(
+				(
+					Int(
+						qqq,
+					) ->
+						zabl),
+					),
+		]
+main! = |_args| {
+	z = "hi"
+	obj = 
+		{ a: "hi\n" }
+	q = obj.a
+	Stdout.line!("hi")
+}
+=-=-=
+
+Name: or-pattern2
+Skip: t
+=-=
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
+
+f : Something -> Something
+f = |z| match List.get(nfa, state_ind) {
+	Ok(A(b, c)) => A(c, b)
+	Ok(_)
+	| Ok(_)
+	| Err(_) =>
+		Ok(32)
+	}
+=-=-=
