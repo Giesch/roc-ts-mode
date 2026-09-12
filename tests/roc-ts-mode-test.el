@@ -85,6 +85,15 @@ grammars; skip this test when the installed grammar predates them."
       (should (eq (roc-ts-mode-test--fixture-face-at needle)
                   'font-lock-keyword-face)))))
 
+(ert-deftest roc-ts-font-lock-expect-statement ()
+  "`expect' in statement position gets `font-lock-keyword-face'.
+Grammars without the expect_expr node parse a statement-position
+`expect' as a plain identifier; skip this test on those grammars."
+  (skip-unless (ignore-errors
+                 (treesit-query-compile 'roc '((expect_expr) @kw) t)))
+  (should (eq (roc-ts-mode-test--fixture-face-at "expect sum ==")
+              'font-lock-keyword-face)))
+
 (ert-deftest roc-ts-font-lock-other-faces ()
   "Non-keyword constructs keep their own faces."
   (should (eq (roc-ts-mode-test--fixture-face-at "open sesame")
