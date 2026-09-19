@@ -88,7 +88,7 @@ Add the following to ~config.el~ (use ~M-x doom/goto-private-config-file~, typic
   (add-hook 'roc-ts-mode-local-vars-hook #'lsp!)
 
   ;; Formatting
-  (set-formatter! 'roc-ts-format '("roc" "format" "--stdin" "--stdout") :modes '(roc-ts-mode))
+  (set-formatter! 'roc-ts-format '("roc" "fmt" "--stdin") :modes '(roc-ts-mode))
   (setq-hook! 'roc-ts-mode-local-vars-hook
     +format-with 'roc-ts-format)
 
@@ -135,7 +135,7 @@ Relevant discussion: https://lists.gnu.org/archive/html/emacs-devel/2023-11/msg0
 
 ** STRT Indentation rules
 
-Tree sitter is used to make some basic indentation rules that aim to be consistent with "roc format", and there are tests to check that consistency. It's still a work in progress, though.
+Tree sitter is used to make some basic indentation rules that aim to be consistent with "roc fmt", and there are tests to check that consistency. It's still a work in progress, though.
 
 ** Language server integration
 
@@ -168,7 +168,7 @@ You can use the following keybindings to run Roc CLI commands.
 
 | Default keybinding | Emacs ~roc-ts-mode~ command | CLI command   | Description                                            |
 |--------------------+-----------------------------+---------------+--------------------------------------------------------|
-| ~C-c C-f~          | ~roc-ts-format~             | ~roc format~  | Format the current buffer                              |
+| ~C-c C-f~          | ~roc-ts-format~             | ~roc fmt~     | Format the current buffer                              |
 | ~C-c C-b~          | ~roc-ts-build~              | ~roc build~   | Build the current file                                 |
 | ~C-c C-t~          | ~roc-ts-test~               | ~roc test~    | Test the current file                                  |
 | ~C-c C-r~          | ~roc-ts-run~                | ~roc run~     | Run tests in the current file (and modules it imports) |

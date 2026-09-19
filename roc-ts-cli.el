@@ -79,7 +79,7 @@ files in the current directory."
                         (save-buffer)
                         t)))
         (unwind-protect
-            (call-process roc-ts-program nil nil nil "format" directory-to-run-in)
+            (call-process roc-ts-program nil nil nil "fmt" directory-to-run-in)
           (dolist (buffer (buffer-list))
             (with-current-buffer buffer
               (when (and (derived-mode-p 'roc-ts-mode) buffer-file-name)
@@ -88,10 +88,10 @@ files in the current directory."
     (with-temp-buffer
       (let ((temp-buffer (current-buffer)))
         (with-current-buffer buffer
-          (if (equal (call-process-region nil nil roc-ts-program nil temp-buffer nil "format" "--stdin" "--stdout")
+          (if (equal (call-process-region nil nil roc-ts-program nil temp-buffer nil "fmt" "--stdin")
                      0)
               (replace-buffer-contents temp-buffer roc-ts-format-replace-buffer-contents-max-secs)
-            (message "The \"roc format\" command exited unsuccessfully."))))))))
+            (message "The \"roc fmt\" command exited unsuccessfully."))))))))
 
 ;;;###autoload
 (defun roc-ts-build (&optional file)

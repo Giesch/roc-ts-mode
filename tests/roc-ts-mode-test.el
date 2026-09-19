@@ -18,7 +18,7 @@
                         (funcall (if indent-tabs-mode #'tabify #'untabify) (point-min) (point-max)))))
 
 (ert-deftest confirm-roc-ts-format ()
-  "Check that the roc format command produces the same result.
+  "Check that the roc fmt command produces the same result.
 
 This is not a test of roc-ts-mode itself; it's just testing that our
 indentation examples in ./roc-ts-mode-examples.erts are still
@@ -26,7 +26,7 @@ up-to-date with the output of Roc's formatter."
   (ert-test-erts-file (expand-file-name "./roc-ts-mode-examples.erts" roc-ts-mode-test--dir)
                       (lambda ()
                         (shell-command-on-region (point-min) (point-max)
-                                                 "roc fmt --stdin --stdout"
+                                                 "roc fmt --stdin"
                                                  (current-buffer) t))))
 
 (ert-deftest roc-ts-newline-and-indent ()
