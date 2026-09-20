@@ -103,5 +103,13 @@ Grammars without the expect_expr node parse a statement-position
   (should (eq (roc-ts-mode-test--fixture-face-at "# binary operators")
               'font-lock-comment-face)))
 
+(ert-deftest roc-ts-font-lock-multiline-string ()
+  "Each `\\\\'-prefixed line of a multiline string gets `font-lock-string-face'."
+  (dolist (needle '("\\\\Line 1"
+                    "Line 2"))
+    (ert-info ((format "needle: %s" needle))
+      (should (eq (roc-ts-mode-test--fixture-face-at needle)
+                  'font-lock-string-face)))))
+
 (provide 'roc-ts-mode-test)
 ;;; roc-ts-mode-test.el ends here

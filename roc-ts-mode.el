@@ -192,6 +192,7 @@ Uses `treesit-install-language-grammar'."
     :override t
     :feature strings
     ((string) @font-lock-string-face
+     (multiline_string) @font-lock-string-face
      (package_uri) @font-lock-string-face)
 
     :language roc
