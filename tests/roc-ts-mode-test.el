@@ -87,12 +87,38 @@ grammars; skip this test when the installed grammar predates them."
 
 (ert-deftest roc-ts-font-lock-expect-statement ()
   "`expect' in statement position gets `font-lock-keyword-face'.
-Grammars without the expect_expr node parse a statement-position
-`expect' as a plain identifier; skip this test on those grammars."
+Grammars without a named `expect' node can parse statement-position
+`expect' differently; skip this test on those grammars."
   (skip-unless (ignore-errors
-                 (treesit-query-compile 'roc '((expect_expr) @kw) t)))
+                 (treesit-query-compile 'roc '((expect) @kw) t)))
   (should (eq (roc-ts-mode-test--fixture-face-at "expect sum ==")
               'font-lock-keyword-face)))
+
+(ert-deftest roc-ts-block-statements-with-updated-grammar ()
+  "Highlight and navigate block statements added by the updated grammar."
+  (skip-unless (ignore-errors
+                 (treesit-query-compile 'roc '((expect) @expect) t)))
+  (with-temp-buffer
+    (insert "check = |input| {\n"
+            "    Ok(value) = input\n"
+            "    expect value == 1\n"
+            "    value\n"
+            "}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "Ok(value)")
+    (let ((node (treesit-node-at (match-beginning 0))))
+      (should (equal (treesit-node-type node) "identifier"))
+      (should (equal (treesit-node-type (treesit-node-parent node)) "tag"))
+      (should (equal (treesit-node-type (treesit-node-parent
+                                        (treesit-node-parent node)))
+                     "tag_pattern")))
+    (search-forward "expect")
+    (should (eq (get-text-property (match-beginning 0) 'face)
+                'font-lock-keyword-face))
+    (should-not (treesit-query-capture (treesit-buffer-root-node)
+                                      '((ERROR) @error)))))
 
 (ert-deftest roc-ts-font-lock-other-faces ()
   "Non-keyword constructs keep their own faces."

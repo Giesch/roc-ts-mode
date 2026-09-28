@@ -137,7 +137,7 @@ If nil, use the value of `tab-width'."
 (add-to-list 'interpreter-mode-alist '("roc" . roc-ts-mode))
 
 (add-to-list 'treesit-language-source-alist
-             '(roc . ("https://github.com/faldor20/tree-sitter-roc/")))
+             '(roc . ("https://github.com/Giesch/tree-sitter-roc/")))
 
 ;;;###autoload
 (defun roc-ts-install-treesit-grammar ()
@@ -216,11 +216,9 @@ Uses `treesit-install-language-grammar'."
     :feature numbers
     ((int) @font-lock-number-face
      (xint) @font-lock-number-face
-     (uint) @font-lock-number-face
-     (iint) @font-lock-number-face
      (float) @font-lock-number-face
-     (decimal) @font-lock-number-face
-     (natural) @font-lock-number-face)
+     (number_with_suffix) @font-lock-number-face
+     (negative_number) @font-lock-number-face)
 
     :language roc
     :override t
