@@ -306,7 +306,14 @@ Uses `treesit-install-language-grammar'."
     :language roc
     :override t
     :feature assignments
-    ((value_declaration "=" @font-lock-misc-punctuation-face)))
+    ((value_declaration "=" @font-lock-misc-punctuation-face))
+
+    ;; The grammar can parse otherwise valid Roc syntax as ERROR.  Keep the
+    ;; affected text in the default face instead of a misleading type face.
+    :language roc
+    :override t
+    :feature errors
+    ((ERROR) @default))
   "The rules for syntax highlighting Roc code based on tree-sitter.
 
 This is passed to `treesit-font-lock-rules' and assigned to
@@ -507,8 +514,8 @@ This is assigned to `treesit-defun-name-function'."
   (setq-local treesit-font-lock-feature-list
               '((comments doc-comments definition-names)
                 (keywords strings string-escapes types type-variables tag-types)
-                (numbers)
-                (record-field-declaration record-field-access function-calls tags variable-use modules operators  delimiters brackets arrows lambdas assignments)))
+                (numbers errors)
+                (record-field-declaration record-field-access function-calls tags variable-use modules operators delimiters brackets arrows lambdas assignments)))
 
   (setq-local treesit-defun-type-regexp (cons "" #'roc-ts--ts-defun-p)
               treesit-defun-name-function #'roc-ts--ts-defun-name

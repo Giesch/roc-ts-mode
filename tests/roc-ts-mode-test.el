@@ -120,6 +120,19 @@ Grammars without a named `expect' node can parse statement-position
     (should-not (treesit-query-capture (treesit-buffer-root-node)
                                       '((ERROR) @error)))))
 
+(ert-deftest roc-ts-font-lock-error-uses-default-face ()
+  "Use the default face for text the grammar parses as ERROR."
+  (with-temp-buffer
+    (insert "Ok(input_program) = Program.parse(puzzle_input)\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "input_program")
+    (let ((pos (match-beginning 0)))
+      (should (treesit-query-capture (treesit-buffer-root-node)
+                                     '((ERROR) @error)))
+      (should (eq (get-text-property pos 'face) 'default)))))
+
 (ert-deftest roc-ts-font-lock-other-faces ()
   "Non-keyword constructs keep their own faces."
   (should (eq (roc-ts-mode-test--fixture-face-at "open sesame")
