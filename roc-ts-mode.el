@@ -198,7 +198,8 @@ Uses `treesit-install-language-grammar'."
     :language roc
     :override t
     :feature types
-    ((inferred) @font-lock-type-face)
+    ((concrete_type) @font-lock-type-face
+     (inferred) @font-lock-type-face)
 
     :language roc
     :override t
