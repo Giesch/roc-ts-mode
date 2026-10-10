@@ -137,7 +137,8 @@ If nil, use the value of `tab-width'."
 (add-to-list 'interpreter-mode-alist '("roc" . roc-ts-mode))
 
 (add-to-list 'treesit-language-source-alist
-             '(roc . ("https://github.com/Giesch/tree-sitter-roc/")))
+             '(roc . ("https://github.com/Giesch/tree-sitter-roc/"
+                       "70c8b86cb26679a4d7eeaadac255818baf4f1d05")))
 
 ;;;###autoload
 (defun roc-ts-install-treesit-grammar ()
