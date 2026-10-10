@@ -266,6 +266,17 @@ Uses `treesit-install-language-grammar'."
 
     :language roc
     :override t
+    :feature definition-names
+    ((annotation_type_def
+      (annotation_pre_colon (identifier) @font-lock-function-name-face)
+      (function_type))
+     (value_declaration
+      (decl_left
+       (identifier_pattern (identifier) @font-lock-function-name-face))
+      body: (expr_body (anon_fun_expr))))
+
+    :language roc
+    :override t
     :feature tags
     ((tag) @font-lock-builtin-face)
 

@@ -49,6 +49,30 @@ its first occurrence in the fixture."
     (search-forward needle)
     (get-text-property (match-beginning 0) 'face)))
 
+(ert-deftest roc-ts-font-lock-function-declarations ()
+  "Highlight lambda declarations and function annotations as functions."
+  (with-temp-buffer
+    (insert "main! : List(Str) => Try({}, _)\n"
+            "main! = |_args| Ok({})\n"
+            "parse : Str -> Try(Str, _)\n"
+            "parse = |input| {\n"
+            "    lines = input.trim().split_on(\"\\n\")\n"
+            "    ok = |value| Ok(value)\n"
+            "    ok(lines)\n"
+            "}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (dolist (entry '(("main! :" . font-lock-function-name-face)
+                     ("main! =" . font-lock-function-name-face)
+                     ("parse :" . font-lock-function-name-face)
+                     ("parse =" . font-lock-function-name-face)
+                     ("lines =" . font-lock-variable-name-face)
+                     ("ok =" . font-lock-function-name-face)))
+      (goto-char (point-min))
+      (search-forward (car entry))
+      (should (eq (get-text-property (match-beginning 0) 'face)
+                  (cdr entry))))))
+
 (ert-deftest roc-ts-font-lock-else ()
   "`else' is highlighted as a keyword, same as `if'.
 Regression test: the \"else\" rule was left commented out when the
