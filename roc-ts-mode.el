@@ -150,6 +150,16 @@ Uses `treesit-install-language-grammar'."
 
 ;;;; Private
 
+(defun roc-ts--fontify-tag-type (node override start end &rest _)
+  "Fontify only the constructor name of a tag type NODE."
+  (let* ((name-start (treesit-node-start node))
+         (first-child (treesit-node-child node 0))
+         (name-end (if first-child
+                       (treesit-node-start first-child)
+                     (treesit-node-end node))))
+    (treesit-fontify-with-override
+     name-start name-end 'font-lock-builtin-face override start end)))
+
 (defvar roc-ts--ts-font-lock-rules
   '(:language roc
     :override t
@@ -211,7 +221,7 @@ Uses `treesit-install-language-grammar'."
     :override t
     :feature tag-types
     ((tags_type
-      (tag_type) @font-lock-builtin-face))
+      (tag_type) @roc-ts--fontify-tag-type))
 
     :language roc
     :override t

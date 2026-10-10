@@ -133,6 +133,28 @@ Grammars without a named `expect' node can parse statement-position
                                      '((ERROR) @error)))
       (should (eq (get-text-property pos 'face) 'default)))))
 
+(ert-deftest roc-ts-font-lock-tag-union-payload-types ()
+  "Tag constructors and their payload types have distinct faces."
+  (with-temp-buffer
+    (insert "Instruction := [\n"
+            "    Halt,\n"
+            "    Half(Register),\n"
+            "    Jump(I32),\n"
+            "    JumpIfEven(Register, I32),\n"
+            "].{}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (dolist (tag '("Halt" "Half" "Jump(" "JumpIfEven"))
+      (goto-char (point-min))
+      (search-forward tag)
+      (should (eq (get-text-property (match-beginning 0) 'face)
+                  'font-lock-builtin-face)))
+    (dolist (type '("Register" "I32"))
+      (goto-char (point-min))
+      (while (search-forward type nil t)
+        (should (eq (get-text-property (match-beginning 0) 'face)
+                    'font-lock-type-face))))))
+
 (ert-deftest roc-ts-font-lock-other-faces ()
   "Non-keyword constructs keep their own faces."
   (should (eq (roc-ts-mode-test--fixture-face-at "open sesame")
