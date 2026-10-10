@@ -172,5 +172,32 @@ Grammars without a named `expect' node can parse statement-position
       (should (eq (roc-ts-mode-test--fixture-face-at needle)
                   'font-lock-string-face)))))
 
+(ert-deftest roc-ts-font-lock-nominal-constructor ()
+  "Nominal constructor names use the type face without coloring payloads."
+  (with-temp-buffer
+    (insert "ok = |registers| Ok(Machine.(registers))\n"
+            "wrapped = Instruction.(Half(A))\n")
+    (let ((treesit-font-lock-level 4))
+      (roc-ts-mode))
+    (setq-local case-fold-search nil)
+    (font-lock-ensure)
+    (should-not (treesit-query-capture (treesit-buffer-root-node)
+                                      '((ERROR) @error)))
+    (dolist (entry '(("Machine" . font-lock-type-face)
+                     ("Instruction" . font-lock-type-face)
+                     ("Ok" . font-lock-builtin-face)
+                     ("Half" . font-lock-builtin-face)
+                     ("A" . font-lock-builtin-face)
+                     ("registers))" . font-lock-variable-use-face)))
+      (goto-char (point-min))
+      (search-forward (car entry))
+      (let ((start (match-beginning 0))
+            (length (if (equal (car entry) "registers))")
+                        (length "registers")
+                      (length (car entry)))))
+        (dotimes (offset length)
+          (should (eq (get-text-property (+ start offset) 'face)
+                      (cdr entry))))))))
+
 (provide 'roc-ts-mode-test)
 ;;; roc-ts-mode-test.el ends here

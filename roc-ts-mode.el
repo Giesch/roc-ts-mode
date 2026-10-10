@@ -271,6 +271,12 @@ Uses `treesit-install-language-grammar'."
 
     :language roc
     :override t
+    :feature types
+    ((nominal_constructor_expr
+      (tag (identifier) @font-lock-type-face)))
+
+    :language roc
+    :override t
     :feature modules
     ((module) @font-lock-constant-face)
 
