@@ -137,6 +137,22 @@ its first occurrence in the fixture."
       (should (eq (get-text-property (1+ start) 'face)
                   'font-lock-variable-name-face)))))
 
+(ert-deftest roc-ts-font-lock-tuple-declaration ()
+  "Highlight both names introduced by a tuple declaration."
+  (with-temp-buffer
+    (insert "solve = |_| {\n"
+            "    old_buffs = battle.player.buff_clocks\n"
+            "    (armor, shield) = (7, old_buffs.shield)\n"
+            "    armor + shield\n"
+            "}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (dolist (name '("old_buffs" "armor" "shield"))
+      (goto-char (point-min))
+      (search-forward name)
+      (should (eq (get-text-property (match-beginning 0) 'face)
+                  'font-lock-variable-name-face)))))
+
 (ert-deftest roc-ts-font-lock-else ()
   "`else' is highlighted as a keyword, same as `if'.
 Regression test: the \"else\" rule was left commented out when the

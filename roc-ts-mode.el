@@ -291,6 +291,10 @@ Uses `treesit-install-language-grammar'."
       (identifier_pattern
        (identifier) @font-lock-variable-name-face))
      (decl_left
+      (tuple_pattern
+       (identifier_pattern
+        (identifier) @font-lock-variable-name-face)))
+     (decl_left
       (tag_pattern
        args: (identifier_pattern
               (identifier) @font-lock-variable-name-face)))
