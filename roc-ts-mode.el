@@ -278,7 +278,10 @@ Uses `treesit-install-language-grammar'."
     :override t
     :feature function-calls
     ((function_call_pnc_expr
-      caller: (variable_expr (identifier) @roc-ts--fontify-function-call)))
+      caller: (variable_expr (identifier) @roc-ts--fontify-function-call))
+     (function_call_pnc_expr
+      caller: (field_access_expr
+               (identifier) @roc-ts--fontify-function-call)))
 
     :language roc
     :override t

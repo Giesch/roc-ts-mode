@@ -98,6 +98,26 @@ its first occurrence in the fixture."
                        (+ start (string-match-p "!" (car entry))) 'face)
                       (cdr entry)))))))))
 
+(ert-deftest roc-ts-font-lock-method-calls ()
+  "Highlight called fields as functions, but leave field reads alone."
+  (with-temp-buffer
+    (insert "parse = |input| {\n"
+            "    parts = input.trim().split_on(\"\\n\")\n"
+            "    name = input.name\n"
+            "    parts.get(0)\n"
+            "}\n")
+    (let ((treesit-font-lock-level 4))
+      (roc-ts-mode)
+      (font-lock-ensure)
+      (dolist (entry '(("trim(" . font-lock-function-call-face)
+                       ("split_on(" . font-lock-function-call-face)
+                       ("get(" . font-lock-function-call-face)
+                       ("name\n" . font-lock-variable-use-face)))
+        (goto-char (point-min))
+        (search-forward (car entry))
+        (should (eq (get-text-property (match-beginning 0) 'face)
+                    (cdr entry)))))))
+
 (ert-deftest roc-ts-font-lock-mutable-declaration ()
   "Highlight the name introduced by `var' as a declaration."
   (with-temp-buffer
