@@ -262,7 +262,11 @@ Uses `treesit-install-language-grammar'."
     ((annotation_pre_colon) @font-lock-variable-name-face
      (decl_left
       (identifier_pattern
-       (identifier) @font-lock-variable-name-face)))
+       (identifier) @font-lock-variable-name-face))
+     (decl_left
+      (tag_pattern
+       args: (identifier_pattern
+              (identifier) @font-lock-variable-name-face))))
 
     :language roc
     :override t

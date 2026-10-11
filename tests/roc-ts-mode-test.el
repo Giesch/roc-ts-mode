@@ -147,15 +147,27 @@ Grammars without a named `expect' node can parse statement-position
 (ert-deftest roc-ts-font-lock-error-uses-default-face ()
   "Use the default face for text the grammar parses as ERROR."
   (with-temp-buffer
-    (insert "Ok(input_program) = Program.parse(puzzle_input)\n")
+    (insert "Ok(input_program)) = Program.parse(puzzle_input)\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "input_program))")
+    (let ((pos (1- (match-end 0))))
+      (should (treesit-query-capture (treesit-buffer-root-node)
+                                     '((ERROR) @error)))
+      (should (eq (get-text-property pos 'face) 'default)))))
+
+(ert-deftest roc-ts-font-lock-tag-pattern-binding ()
+  "Highlight a name bound inside a top-level tag pattern."
+  (with-temp-buffer
+    (insert "Ok(input_program) = Program.parse(puzzle_input)\n\n"
+            "part_one = Machine.default().run(input_program)\n")
     (roc-ts-mode)
     (font-lock-ensure)
     (goto-char (point-min))
     (search-forward "input_program")
-    (let ((pos (match-beginning 0)))
-      (should (treesit-query-capture (treesit-buffer-root-node)
-                                     '((ERROR) @error)))
-      (should (eq (get-text-property pos 'face) 'default)))))
+    (should (eq (get-text-property (match-beginning 0) 'face)
+                'font-lock-variable-name-face))))
 
 (ert-deftest roc-ts-font-lock-tag-union-payload-types ()
   "Tag constructors and their payload types have distinct faces."
