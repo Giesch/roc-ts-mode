@@ -60,6 +60,11 @@ If nil, use the value of `tab-width'."
   :safe #'booleanp
   :group 'roc-ts)
 
+(defface roc-ts-bang-function-face
+  '((t :inherit font-lock-warning-face :weight normal))
+  "Face for function names ending in an exclamation point."
+  :group 'roc-ts)
+
 ;;;; Commands
 
 (defvar-keymap roc-ts-mode-map
@@ -160,6 +165,25 @@ Uses `treesit-install-language-grammar'."
     (treesit-fontify-with-override
      name-start name-end 'font-lock-builtin-face override start end)))
 
+(defun roc-ts--fontify-function (node normal-face override start end)
+  "Fontify function identifier NODE, using NORMAL-FACE unless it ends in `!'."
+  (treesit-fontify-with-override
+   (treesit-node-start node) (treesit-node-end node)
+   (if (string-suffix-p "!" (treesit-node-text node t))
+       'roc-ts-bang-function-face
+     normal-face)
+   override start end))
+
+(defun roc-ts--fontify-function-name (node override start end &rest _)
+  "Fontify declared function identifier NODE."
+  (roc-ts--fontify-function node 'font-lock-function-name-face
+                            override start end))
+
+(defun roc-ts--fontify-function-call (node override start end &rest _)
+  "Fontify called function identifier NODE."
+  (roc-ts--fontify-function node 'font-lock-function-call-face
+                            override start end))
+
 (defvar roc-ts--ts-font-lock-rules
   '(:language roc
     :override t
@@ -246,15 +270,15 @@ Uses `treesit-install-language-grammar'."
 
     :language roc
     :override t
-    :feature function-calls
-    ((function_call_pnc_expr
-      caller: (variable_expr (identifier) @font-lock-function-call-face)))
-
-    :language roc
-    :override t
     :feature variable-use
     ((identifier) @font-lock-variable-use-face
      (ident) @font-lock-variable-use-face) ;; TODO: What's the difference?
+
+    :language roc
+    :override t
+    :feature function-calls
+    ((function_call_pnc_expr
+      caller: (variable_expr (identifier) @roc-ts--fontify-function-call)))
 
     :language roc
     :override t
@@ -274,11 +298,11 @@ Uses `treesit-install-language-grammar'."
     :override t
     :feature definition-names
     ((annotation_type_def
-      (annotation_pre_colon (identifier) @font-lock-function-name-face)
+      (annotation_pre_colon (identifier) @roc-ts--fontify-function-name)
       (function_type))
      (value_declaration
       (decl_left
-       (identifier_pattern (identifier) @font-lock-function-name-face))
+       (identifier_pattern (identifier) @roc-ts--fontify-function-name))
       body: (expr_body (anon_fun_expr))))
 
     :language roc
@@ -551,7 +575,7 @@ This is assigned to `treesit-defun-name-function'."
               '((comments doc-comments definition-names)
                 (keywords strings string-escapes types type-variables tag-types)
                 (numbers errors)
-                (record-field-declaration record-field-access function-calls tags variable-use modules operators delimiters brackets arrows lambdas assignments)))
+                (record-field-declaration record-field-access tags variable-use function-calls modules operators delimiters brackets arrows lambdas assignments)))
 
   (setq-local treesit-defun-type-regexp (cons "" #'roc-ts--ts-defun-p)
               treesit-defun-name-function #'roc-ts--ts-defun-name

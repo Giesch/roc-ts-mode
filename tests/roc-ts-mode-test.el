@@ -62,8 +62,8 @@ its first occurrence in the fixture."
             "}\n")
     (roc-ts-mode)
     (font-lock-ensure)
-    (dolist (entry '(("main! :" . font-lock-function-name-face)
-                     ("main! =" . font-lock-function-name-face)
+    (dolist (entry '(("main! :" . roc-ts-bang-function-face)
+                     ("main! =" . roc-ts-bang-function-face)
                      ("parse :" . font-lock-function-name-face)
                      ("parse =" . font-lock-function-name-face)
                      ("lines =" . font-lock-variable-name-face)
@@ -72,6 +72,31 @@ its first occurrence in the fixture."
       (search-forward (car entry))
       (should (eq (get-text-property (match-beginning 0) 'face)
                   (cdr entry))))))
+
+(ert-deftest roc-ts-font-lock-bang-function-calls ()
+  "Use the bang face for effectful calls and retain ordinary call faces."
+  (with-temp-buffer
+    (insert "main! : List(Str) => Try({}, _)\n"
+            "main! = |_args| {\n"
+            "    part_one = solve({ difficulty: Normal })\n"
+            "    echo!(\"Part One: ${part_one.to_str()}\\n\")\n"
+            "    Ok({})\n"
+            "}\n")
+    (let ((treesit-font-lock-level 4))
+      (roc-ts-mode)
+      (font-lock-ensure)
+    (dolist (entry '(("main! :" . roc-ts-bang-function-face)
+                     ("main! =" . roc-ts-bang-function-face)
+                     ("echo!(" . roc-ts-bang-function-face)
+                     ("solve(" . font-lock-function-call-face)))
+      (goto-char (point-min))
+      (search-forward (car entry))
+      (let ((start (match-beginning 0)))
+        (should (eq (get-text-property start 'face) (cdr entry)))
+        (when (eq (cdr entry) 'roc-ts-bang-function-face)
+          (should (eq (get-text-property
+                       (+ start (string-match-p "!" (car entry))) 'face)
+                      (cdr entry)))))))))
 
 (ert-deftest roc-ts-font-lock-mutable-declaration ()
   "Highlight the name introduced by `var' as a declaration."
