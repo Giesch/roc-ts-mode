@@ -266,7 +266,9 @@ Uses `treesit-install-language-grammar'."
      (decl_left
       (tag_pattern
        args: (identifier_pattern
-              (identifier) @font-lock-variable-name-face))))
+              (identifier) @font-lock-variable-name-face)))
+     (var_declaration
+      name: (identifier) @font-lock-variable-name-face))
 
     :language roc
     :override t

@@ -73,6 +73,25 @@ its first occurrence in the fixture."
       (should (eq (get-text-property (match-beginning 0) 'face)
                   (cdr entry))))))
 
+(ert-deftest roc-ts-font-lock-mutable-declaration ()
+  "Highlight the name introduced by `var' as a declaration."
+  (with-temp-buffer
+    (insert "solve = |_| {\n"
+            "    var $battles = []\n"
+            "    $battles\n"
+            "}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "$battles")
+    (let ((start (match-beginning 0)))
+      (should (equal (treesit-node-type (treesit-node-at (1+ start)))
+                     "identifier"))
+      (should (eq (get-text-property start 'face)
+                  'font-lock-variable-name-face))
+      (should (eq (get-text-property (1+ start) 'face)
+                  'font-lock-variable-name-face)))))
+
 (ert-deftest roc-ts-font-lock-else ()
   "`else' is highlighted as a keyword, same as `if'.
 Regression test: the \"else\" rule was left commented out when the
