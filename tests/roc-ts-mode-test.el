@@ -62,8 +62,8 @@ its first occurrence in the fixture."
             "}\n")
     (roc-ts-mode)
     (font-lock-ensure)
-    (dolist (entry '(("main! :" . roc-ts-bang-function-face)
-                     ("main! =" . roc-ts-bang-function-face)
+    (dolist (entry '(("main! :" . font-lock-function-name-face)
+                     ("main! =" . font-lock-function-name-face)
                      ("parse :" . font-lock-function-name-face)
                      ("parse =" . font-lock-function-name-face)
                      ("lines =" . font-lock-variable-name-face)
@@ -73,8 +73,8 @@ its first occurrence in the fixture."
       (should (eq (get-text-property (match-beginning 0) 'face)
                   (cdr entry))))))
 
-(ert-deftest roc-ts-font-lock-bang-function-calls ()
-  "Use the bang face for effectful calls and retain ordinary call faces."
+(ert-deftest roc-ts-font-lock-effectful-function-calls ()
+  "Use normal function faces for effectful declarations and calls."
   (with-temp-buffer
     (insert "main! : List(Str) => Try({}, _)\n"
             "main! = |_args| {\n"
@@ -85,15 +85,15 @@ its first occurrence in the fixture."
     (let ((treesit-font-lock-level 4))
       (roc-ts-mode)
       (font-lock-ensure)
-    (dolist (entry '(("main! :" . roc-ts-bang-function-face)
-                     ("main! =" . roc-ts-bang-function-face)
-                     ("echo!(" . roc-ts-bang-function-face)
+    (dolist (entry '(("main! :" . font-lock-function-name-face)
+                     ("main! =" . font-lock-function-name-face)
+                     ("echo!(" . font-lock-function-call-face)
                      ("solve(" . font-lock-function-call-face)))
       (goto-char (point-min))
       (search-forward (car entry))
       (let ((start (match-beginning 0)))
         (should (eq (get-text-property start 'face) (cdr entry)))
-        (when (eq (cdr entry) 'roc-ts-bang-function-face)
+        (when (string-match-p "!" (car entry))
           (should (eq (get-text-property
                        (+ start (string-match-p "!" (car entry))) 'face)
                       (cdr entry)))))))))
