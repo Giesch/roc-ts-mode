@@ -46,7 +46,7 @@
   :group 'languages)
 
 (defface roc-ts-crash-face
-  '((t :inherit font-lock-warning-face :foreground "red" :weight bold))
+  '((t :inherit font-lock-warning-face :weight bold))
   "Face for the `crash' keyword."
   :group 'roc-ts)
 

@@ -216,7 +216,8 @@ grammars; skip this test when the installed grammar predates them."
               'roc-ts-crash-face))
   (should (eq (roc-ts-mode-test--fixture-face-at "\"not implemented\"")
               'font-lock-string-face))
-  (should (equal (face-attribute 'roc-ts-crash-face :foreground nil t) "red"))
+  (should (equal (face-attribute 'roc-ts-crash-face :foreground nil t)
+                 (face-attribute 'font-lock-warning-face :foreground nil t)))
   (should (eq (face-attribute 'roc-ts-crash-face :weight nil t) 'bold)))
 
 (ert-deftest roc-ts-font-lock-expect-statement ()
