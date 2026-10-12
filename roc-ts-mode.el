@@ -298,6 +298,10 @@ Uses `treesit-install-language-grammar'."
       (tag_pattern
        args: (identifier_pattern
               (identifier) @font-lock-variable-name-face)))
+     (decl_left
+      (nominal_constructor_pattern
+       (identifier_pattern
+        (identifier) @font-lock-variable-name-face)))
      (var_declaration
       name: (identifier) @font-lock-variable-name-face))
 

@@ -153,6 +153,27 @@ its first occurrence in the fixture."
       (should (eq (get-text-property (match-beginning 0) 'face)
                   'font-lock-variable-name-face)))))
 
+(ert-deftest roc-ts-font-lock-nominal-declaration ()
+  "Highlight a name bound by a nominal destructuring declaration."
+  (with-temp-buffer
+    (insert "tick_buffs = |battle| {\n"
+            "    Player.(old_player) = battle.player\n"
+            "    Player.(old_player)\n"
+            "}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (should-not (treesit-query-capture (treesit-buffer-root-node)
+                                      '((ERROR) @error)))
+    (goto-char (point-min))
+    (search-forward "Player.(old_player) =")
+    (let ((start (match-beginning 0)))
+      (should (eq (get-text-property start 'face) 'font-lock-type-face))
+      (should (eq (get-text-property (+ start (length "Player.(")) 'face)
+                  'font-lock-variable-name-face)))
+    (search-forward "old_player")
+    (should (eq (get-text-property (match-beginning 0) 'face)
+                'font-lock-variable-use-face))))
+
 (ert-deftest roc-ts-font-lock-else ()
   "`else' is highlighted as a keyword, same as `if'.
 Regression test: the \"else\" rule was left commented out when the
