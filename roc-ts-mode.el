@@ -45,6 +45,11 @@
   "Major mode for the Roc programming language."
   :group 'languages)
 
+(defface roc-ts-crash-face
+  '((t :inherit font-lock-warning-face :foreground "red" :weight bold))
+  "Face for the `crash' keyword."
+  :group 'roc-ts)
+
 (defcustom roc-ts-indent-offset nil
   "The basic indentation offset in `roc-ts-mode'.
 
@@ -388,7 +393,9 @@ or nil if the grammar supports none of the patterns."
           :override t
           :feature 'keywords
           (mapcan (lambda (pattern)
-                    (list pattern '@font-lock-keyword-face))
+                    (list pattern (if (equal pattern "crash")
+                                      '@roc-ts-crash-face
+                                    '@font-lock-keyword-face)))
                   patterns))))
 
 (defun roc-ts--indent-offset (&rest _)
