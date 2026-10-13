@@ -148,7 +148,7 @@ If nil, use the value of `tab-width'."
 
 (add-to-list 'treesit-language-source-alist
              '(roc . ("https://github.com/Giesch/tree-sitter-roc/"
-                       "2026-10-12.02")))
+                       "2026-10-13.01")))
 
 ;;;###autoload
 (defun roc-ts-install-treesit-grammar ()
@@ -159,6 +159,32 @@ Uses `treesit-install-language-grammar'."
   (treesit-install-language-grammar 'roc))
 
 ;;;; Private
+
+(defun roc-ts--fontify-inferred-associated-annotation (node override start end &rest _)
+  "Fontify NODE as a derive only when no matching definition follows.
+OVERRIDE, START, and END are passed to `treesit-fontify-with-override'."
+  (let* ((name (treesit-node-child (treesit-node-child node 0 t) 0 t))
+         (text (treesit-node-text name t))
+         (next (treesit-node-next-sibling node t)))
+    (while (and next (member (treesit-node-type next)
+                            '("line_comment" "doc_comment")))
+      (setq next (treesit-node-next-sibling next t)))
+    (let* ((definition (and next
+                            (equal (treesit-node-type next) "value_declaration")
+                            (treesit-node-child
+                             (treesit-node-child
+                              (treesit-node-child next 0 t) 0 t) 0 t)))
+           (explicit (and definition
+                          (equal (treesit-node-type definition) "identifier")
+                          (equal text (treesit-node-text definition t))))
+           (face (if (and (member text '("is_eq" "to_hash" "parser_for"
+                                        "encoder_for" "map" "map!"))
+                          (not explicit))
+                     'font-lock-function-name-face
+                   'font-lock-variable-name-face)))
+      (treesit-fontify-with-override
+       (treesit-node-start name) (treesit-node-end name)
+       face override start end))))
 
 (defun roc-ts--fontify-tag-type (node override start end &rest _)
   "Fontify only the constructor name of a tag type NODE."
@@ -302,7 +328,8 @@ OVERRIDE, START, and END are passed to `treesit-fontify-with-override'."
     :language roc
     :override t
     :feature definition-names
-    ((annotation_type_def
+    ((inferred_associated_annotation) @roc-ts--fontify-inferred-associated-annotation
+     (annotation_type_def
       (annotation_pre_colon (identifier) @font-lock-function-name-face)
       (function_type))
      (annotation_type_def

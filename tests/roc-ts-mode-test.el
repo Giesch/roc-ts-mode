@@ -455,3 +455,56 @@ Grammars without a named `expect' node can parse statement-position
 
 (provide 'roc-ts-mode-test)
 ;;; roc-ts-mode-test.el ends here
+
+(ert-deftest roc-ts-font-lock-derived-associated-methods ()
+  "Only supported associated annotations without matching bodies are derives."
+  (dolist (name '("is_eq" "to_hash" "parser_for" "encoder_for" "map" "map!"))
+    (dolist (tail '("" "\n    other = 42" "\n    # comment\n    other = 42"))
+      (with-temp-buffer
+        (insert "Flags := [A, B].{\n    " name " : _" tail "\n}\n")
+        (roc-ts-mode)
+        (font-lock-ensure)
+        (goto-char (point-min))
+        (search-forward (concat name " :"))
+        (dotimes (offset (length name))
+          (should (eq (get-text-property (+ (match-beginning 0) offset) 'face)
+                      'font-lock-function-name-face)))
+        (search-forward "_")
+        (should-not (eq (get-text-property (1- (point)) 'face)
+                        'font-lock-function-name-face))))))
+
+(ert-deftest roc-ts-font-lock-inferred-values-are-not-derives ()
+  "An explicit definition or a non-associated context prevents derivation."
+  (dolist (source '("Flags := [A].{ is_eq : _\n is_eq = 42 }"
+                    "Flags := [A].{ is_eq : _\n # comment\n ## docs\n is_eq = 42 }"
+                    "Flags := [A].{ count : _\n count = 42 }"
+                    "Flags := [A].{ unknown : _ }"
+                    "is_eq : _\nis_eq = 42"
+                    "main = || { is_eq : _\n is_eq = 42\n is_eq }"))
+    (with-temp-buffer
+      (insert source)
+      (roc-ts-mode)
+      (font-lock-ensure)
+      (goto-char (point-min))
+      (re-search-forward "[a-z_]+ : _")
+      (should (eq (get-text-property (match-beginning 0) 'face)
+                  'font-lock-variable-name-face)))))
+
+(ert-deftest roc-ts-font-lock-derived-method-edit-definition ()
+  "Adding and removing an explicit body updates the preceding annotation."
+  (with-temp-buffer
+    (insert "Flags := [A].{\n    is_eq : _\n}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "is_eq")
+    (let ((name-start (match-beginning 0)))
+      (should (eq (get-text-property name-start 'face) 'font-lock-function-name-face))
+      (end-of-line)
+      (let ((body-start (point)))
+        (insert "\n    is_eq = 42")
+        (font-lock-ensure)
+        (should (eq (get-text-property name-start 'face) 'font-lock-variable-name-face))
+        (delete-region body-start (point))
+        (font-lock-ensure)
+        (should (eq (get-text-property name-start 'face) 'font-lock-function-name-face))))))
