@@ -73,6 +73,25 @@ its first occurrence in the fixture."
       (should (eq (get-text-property (match-beginning 0) 'face)
                   (cdr entry))))))
 
+(ert-deftest roc-ts-font-lock-function-declaration-with-where-clause ()
+  "Highlight a `where`-constrained function annotation the same as its definition."
+  (with-temp-buffer
+    (insert "advance : { n : c, sum : d, .. } -> [Ok((d, { n : c, sum : d }))]\n"
+            "    where [c.plus : c, e -> c, d.plus : d, c -> d, e.from_numeral : Numeral -> Try(e, [InvalidNumeral(Str)])]\n"
+            "advance = |state| {\n"
+            "    n = state.n + 1\n"
+            "    sum = state.sum + state.n\n\n"
+            "    Ok((sum, { sum, n }))\n"
+            "}\n")
+    (roc-ts-mode)
+    (font-lock-ensure)
+    (dolist (entry '(("advance :" . font-lock-function-name-face)
+                     ("advance =" . font-lock-function-name-face)))
+      (goto-char (point-min))
+      (search-forward (car entry))
+      (should (eq (get-text-property (match-beginning 0) 'face)
+                  (cdr entry))))))
+
 (ert-deftest roc-ts-font-lock-effectful-function-calls ()
   "Use normal function faces for effectful declarations and calls."
   (with-temp-buffer

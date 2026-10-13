@@ -143,7 +143,7 @@ If nil, use the value of `tab-width'."
 
 (add-to-list 'treesit-language-source-alist
              '(roc . ("https://github.com/Giesch/tree-sitter-roc/"
-                       "2026-10-12.01")))
+                       "2026-10-12.02")))
 
 ;;;###autoload
 (defun roc-ts-install-treesit-grammar ()
@@ -292,6 +292,9 @@ Uses `treesit-install-language-grammar'."
     ((annotation_type_def
       (annotation_pre_colon (identifier) @font-lock-function-name-face)
       (function_type))
+     (annotation_type_def
+      (annotation_pre_colon (identifier) @font-lock-function-name-face)
+      (where_implements type: (function_type)))
      (value_declaration
       (decl_left
        (identifier_pattern (identifier) @font-lock-function-name-face))
