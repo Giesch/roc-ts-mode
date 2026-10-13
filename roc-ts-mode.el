@@ -50,6 +50,11 @@
   "Face for the `crash' keyword."
   :group 'roc-ts)
 
+(defface roc-ts-question-mark-face
+  '((t :inherit font-lock-builtin-face :weight bold))
+  "Face for the early-return question mark operator."
+  :group 'roc-ts)
+
 (defcustom roc-ts-indent-offset nil
   "The basic indentation offset in `roc-ts-mode'.
 
@@ -164,6 +169,14 @@ Uses `treesit-install-language-grammar'."
                      (treesit-node-end node))))
     (treesit-fontify-with-override
      name-start name-end 'font-lock-builtin-face override start end)))
+
+(defun roc-ts--fontify-question-mark (node override start end &rest _)
+  "Fontify NODE as an early return when its text is a single question mark.
+OVERRIDE, START, and END are passed to `treesit-fontify-with-override'."
+  (when (equal (treesit-node-text node) "?")
+    (treesit-fontify-with-override
+     (treesit-node-start node) (treesit-node-end node)
+     'roc-ts-question-mark-face override start end)))
 
 (defvar roc-ts--ts-font-lock-rules
   '(:language roc
@@ -322,6 +335,12 @@ Uses `treesit-install-language-grammar'."
     :override t
     :feature operators
     ((operator) @font-lock-operator-face)
+
+    :language roc
+    :override t
+    :feature early-return
+    ((suffix_operator) @roc-ts-question-mark-face
+     (operator) @roc-ts--fontify-question-mark)
 
     :language roc
     :override t
@@ -571,7 +590,7 @@ This is assigned to `treesit-defun-name-function'."
   (setq-local treesit-font-lock-feature-list
               '((comments doc-comments definition-names)
                 (keywords strings string-escapes types type-variables tag-types)
-                (numbers errors)
+                (numbers errors early-return)
                 (record-field-declaration record-field-access tags variable-use function-calls modules operators delimiters brackets arrows lambdas assignments)))
 
   (setq-local treesit-defun-type-regexp (cons "" #'roc-ts--ts-defun-p)

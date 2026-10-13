@@ -391,5 +391,67 @@ Grammars without a named `expect' node can parse statement-position
           (should (eq (get-text-property (+ start offset) 'face)
                       (cdr entry))))))))
 
+(ert-deftest roc-ts-font-lock-early-return ()
+  "Bold only the question mark in plain and error-wrapping early returns."
+  (dolist (level '(3 4))
+    (with-temp-buffer
+      (insert "run = |input| {\n"
+              "    plain = input.check()?\n"
+              "    chained = input.check()?.tick().check()?\n"
+              "    tagged = I32.from_str(input) ? InvalidOffset\n"
+              "    wrapped = input.get(0) ?\n"
+              "        |e| MissingLine(e)\n"
+              "    ignored = input.get(1) ?\n"
+              "        |_| MissingLine(1)\n"
+              "    Ok(plain)\n"
+              "}\n")
+      (let ((treesit-font-lock-level level))
+        (roc-ts-mode))
+      (font-lock-ensure)
+      (should-not (treesit-query-capture (treesit-buffer-root-node)
+                                        '((ERROR) @error)))
+      (goto-char (point-min))
+      (let ((count 0))
+        (while (search-forward "?" nil t)
+          (setq count (1+ count))
+          (should (eq (get-text-property (1- (point)) 'face)
+                      'roc-ts-question-mark-face))
+          (should-not (eq (get-text-property (- (point) 2) 'face)
+                          'roc-ts-question-mark-face))
+          (should-not (eq (get-text-property (point) 'face)
+                          'roc-ts-question-mark-face)))
+        (should (= count 6)))))
+  (should (eq (face-attribute 'roc-ts-question-mark-face :weight nil t) 'bold))
+  (should (equal (face-attribute 'roc-ts-question-mark-face :foreground nil t)
+                 (face-attribute 'font-lock-builtin-face :foreground nil t))))
+
+(ert-deftest roc-ts-font-lock-question-mark-exclusions ()
+  "Default operators, strings, and comments keep their normal faces."
+  (with-temp-buffer
+    (insert "run = |input| {\n"
+            "    value = input ?? 0\n"
+            "    text = \"? ??\"\n"
+            "    multiline =\n"
+            "        \\\\literal ? ??\n"
+            "    # comment ? ??\n"
+            "    value\n"
+            "}\n")
+    (let ((treesit-font-lock-level 4))
+      (roc-ts-mode))
+    (font-lock-ensure)
+    (should-not (treesit-query-capture (treesit-buffer-root-node)
+                                      '((ERROR) @error)))
+    (dolist (entry '(("input ??" . font-lock-operator-face)
+                     ("\"? ??" . font-lock-string-face)
+                     ("literal ? ??" . font-lock-string-face)
+                     ("comment ? ??" . font-lock-comment-face)))
+      (goto-char (point-min))
+      (search-forward (car entry))
+      (let ((end (point)))
+        (goto-char (match-beginning 0))
+        (while (search-forward "?" end t)
+          (should (eq (get-text-property (1- (point)) 'face)
+                      (cdr entry))))))))
+
 (provide 'roc-ts-mode-test)
 ;;; roc-ts-mode-test.el ends here
