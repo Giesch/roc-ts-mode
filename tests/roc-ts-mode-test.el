@@ -423,7 +423,7 @@ Grammars without a named `expect' node can parse statement-position
         (should (= count 6)))))
   (should (eq (face-attribute 'roc-ts-question-mark-face :weight nil t) 'bold))
   (should (equal (face-attribute 'roc-ts-question-mark-face :foreground nil t)
-                 (face-attribute 'font-lock-builtin-face :foreground nil t))))
+                 (face-attribute 'font-lock-keyword-face :foreground nil t))))
 
 (ert-deftest roc-ts-font-lock-question-mark-exclusions ()
   "Default operators, strings, and comments keep their normal faces."

@@ -51,7 +51,7 @@
   :group 'roc-ts)
 
 (defface roc-ts-question-mark-face
-  '((t :inherit font-lock-builtin-face :weight bold))
+  '((t :inherit font-lock-keyword-face :weight bold))
   "Face for the early-return question mark operator."
   :group 'roc-ts)
 
