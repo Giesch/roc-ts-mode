@@ -211,11 +211,13 @@ font-lock rules were ported to the new grammar."
               'font-lock-keyword-face)))
 
 (ert-deftest roc-ts-font-lock-keywords ()
-  "New-syntax keywords all get `font-lock-keyword-face'."
+  "Highlight keywords with `font-lock-keyword-face'."
   (dolist (needle '("if str == "      ; if_expr
                     "match color"     ; (match) named node
                     "for num in"      ; for_expr
                     "in num_list"     ; for_expr's `in'
+                    "while $count"    ; while_expr
+                    "break\n"        ; (break_expr); first bare `break' statement
                     "var $sum"        ; var_declaration
                     "return 99"       ; early_return_expr
                     "dbg foo"         ; dbg_expr
@@ -227,20 +229,8 @@ font-lock rules were ported to the new grammar."
       (should (eq (roc-ts-mode-test--fixture-face-at needle)
                   'font-lock-keyword-face)))))
 
-(ert-deftest roc-ts-font-lock-conditional-keywords ()
-  "Conditional keywords get their expected faces.
-`while', `break', and `crash' are only in newer tree-sitter-roc
-grammars; skip this test when the installed grammar predates them."
-  (skip-unless (roc-ts--ts-conditional-keyword-rules))
-  (dolist (needle '("while $count"    ; while_expr
-                    "break\n"))        ; (break_expr); first bare `break' statement
-    (ert-info ((format "needle: %s" needle))
-      (should (eq (roc-ts-mode-test--fixture-face-at needle)
-                  'font-lock-keyword-face)))))
-
 (ert-deftest roc-ts-font-lock-crash ()
   "Highlight `crash' in bold red without changing its string argument."
-  (skip-unless (roc-ts--ts-conditional-keyword-rules))
   (should (eq (roc-ts-mode-test--fixture-face-at "crash \"not")
               'roc-ts-crash-face))
   (should (eq (roc-ts-mode-test--fixture-face-at "\"not implemented\"")
@@ -250,18 +240,12 @@ grammars; skip this test when the installed grammar predates them."
   (should (eq (face-attribute 'roc-ts-crash-face :weight nil t) 'bold)))
 
 (ert-deftest roc-ts-font-lock-expect-statement ()
-  "`expect' in statement position gets `font-lock-keyword-face'.
-Grammars without a named `expect' node can parse statement-position
-`expect' differently; skip this test on those grammars."
-  (skip-unless (ignore-errors
-                 (treesit-query-compile 'roc '((expect) @kw) t)))
+  "Highlight `expect' in statement position as a keyword."
   (should (eq (roc-ts-mode-test--fixture-face-at "expect sum ==")
               'font-lock-keyword-face)))
 
-(ert-deftest roc-ts-block-statements-with-updated-grammar ()
-  "Highlight and navigate block statements added by the updated grammar."
-  (skip-unless (ignore-errors
-                 (treesit-query-compile 'roc '((expect) @expect) t)))
+(ert-deftest roc-ts-block-statements ()
+  "Highlight and navigate block statements."
   (with-temp-buffer
     (insert "check = |input| {\n"
             "    Ok(value) = input\n"

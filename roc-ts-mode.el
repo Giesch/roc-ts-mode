@@ -227,6 +227,9 @@ OVERRIDE, START, and END are passed to `treesit-fontify-with-override'."
      "else" @font-lock-keyword-face
      "for" @font-lock-keyword-face
      "in" @font-lock-keyword-face
+     "while" @font-lock-keyword-face
+     (break_expr) @font-lock-keyword-face
+     "crash" @roc-ts-crash-face
      "var" @font-lock-keyword-face
      "return" @font-lock-keyword-face
      "as" @font-lock-keyword-face
@@ -420,33 +423,6 @@ OVERRIDE, START, and END are passed to `treesit-fontify-with-override'."
 This is passed to `treesit-font-lock-rules' and assigned to
 `treesit-font-lock-settings' in `roc-ts--ts-setup'.")
 
-(defconst roc-ts--ts-conditional-keyword-patterns
-  '("while" (break_expr) "crash")
-  "Font-lock keyword patterns not present in all tree-sitter-roc grammars.
-Each is checked against the installed grammar when the mode starts and
-dropped if the grammar doesn't have it, so the mode keeps working with
-grammars from before these keywords were added.")
-
-(defun roc-ts--ts-conditional-keyword-rules ()
-  "Font-lock rules for the grammar-supported conditional keyword patterns.
-Returns a plist fragment in the format of `roc-ts--ts-font-lock-rules',
-or nil if the grammar supports none of the patterns."
-  (when-let* ((patterns
-               (seq-filter
-                (lambda (pattern)
-                  (ignore-errors
-                    (treesit-query-compile
-                     'roc (list pattern '@font-lock-keyword-face) t)))
-                roc-ts--ts-conditional-keyword-patterns)))
-    (list :language 'roc
-          :override t
-          :feature 'keywords
-          (mapcan (lambda (pattern)
-                    (list pattern (if (equal pattern "crash")
-                                      '@roc-ts-crash-face
-                                    '@font-lock-keyword-face)))
-                  patterns))))
-
 (defun roc-ts--indent-offset (&rest _)
   (or roc-ts-indent-offset
       tab-width))
@@ -611,9 +587,7 @@ This is assigned to `treesit-defun-name-function'."
   ;; TODO: There is a highlight.scm file in the tree-sitter-roc codebase. How can I use it?
 
   (setq-local treesit-font-lock-settings
-              (apply #'treesit-font-lock-rules
-                     (append roc-ts--ts-font-lock-rules
-                             (roc-ts--ts-conditional-keyword-rules))))
+              (apply #'treesit-font-lock-rules roc-ts--ts-font-lock-rules))
 
   (setq-local treesit-font-lock-feature-list
               '((comments doc-comments definition-names)
