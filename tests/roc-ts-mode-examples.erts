@@ -42,7 +42,7 @@ import pf.Task
 
 main! = |_args| {
 	z = "hi"
-	obj = 
+	obj =
 		{ a: "hi\n" }
 	q = obj.a
 	Stdout.line!("hi")
@@ -59,7 +59,7 @@ import pf.Task
 main! : Int(q, zib), Int(q, { a : Int, b : Int(_) => Int }) -> [False((Int(q) -> zabl)), True]
 main! = |_args| {
 	z = "hi"
-	obj = 
+	obj =
 		{ a: "hi\n" }
 	q = obj.a
 	Stdout.line!("hi")
@@ -94,7 +94,7 @@ main! :
 		]
 main! = |_args| {
 	z = "hi"
-	obj = 
+	obj =
 		{ a: "hi\n" }
 	q = obj.a
 	Stdout.line!("hi")

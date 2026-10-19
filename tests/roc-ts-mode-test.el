@@ -179,7 +179,8 @@ its first occurrence in the fixture."
             "    Player.(old_player) = battle.player\n"
             "    Player.(old_player)\n"
             "}\n")
-    (roc-ts-mode)
+    (let ((treesit-font-lock-level 4))
+      (roc-ts-mode))
     (font-lock-ensure)
     (should-not (treesit-query-capture (treesit-buffer-root-node)
                                       '((ERROR) @error)))
