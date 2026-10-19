@@ -581,7 +581,8 @@ This is assigned to an entry of `treesit-simple-indent-rules'.")
 (defvar roc-ts--ts-simple-imenu-settings
   `(("Definition" ,(rx bos "value_declaration" eos) nil nil)
     ("Type alias" ,(rx bos "alias_type_def" eos) nil nil)
-    ("Opaque type" ,(rx bos "opaque_type_def" eos) nil nil))
+    ("Opaque type" ,(rx bos "opaque_type_def" eos) nil nil)
+    ("Nominal type" ,(rx bos "nominal_type_def" eos) nil nil))
   "Rules for finding `imenu' entries in Roc code based on tree-sitter.")
 
 (defun roc-ts--ts-defun-p (node)

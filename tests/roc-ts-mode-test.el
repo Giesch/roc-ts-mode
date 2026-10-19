@@ -49,6 +49,15 @@ its first occurrence in the fixture."
     (search-forward needle)
     (get-text-property (match-beginning 0) 'face)))
 
+(ert-deftest roc-ts-imenu-nominal-type ()
+  "List nominal types by name in the imenu index."
+  (with-temp-buffer
+    (insert "Color := [Red, Green]\nx = 1\n")
+    (roc-ts-mode)
+    (let ((nominal-types (assoc "Nominal type" (treesit-simple-imenu))))
+      (should nominal-types)
+      (should (assoc "Color" (cdr nominal-types))))))
+
 (ert-deftest roc-ts-font-lock-function-declarations ()
   "Highlight lambda declarations and function annotations as functions."
   (with-temp-buffer
