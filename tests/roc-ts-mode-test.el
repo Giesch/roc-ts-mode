@@ -17,6 +17,50 @@
                         (indent-region (point-min) (point-max))
                         (funcall (if indent-tabs-mode #'tabify #'untabify) (point-min) (point-max)))))
 
+(ert-deftest roc-ts-module-header-exposes-indentation ()
+  "Indent a module header without changing import exposure indentation."
+  (let ((roc-ts-indent-tabs-mode nil)
+        (roc-ts-indent-offset 4))
+    (dolist (case '(("module [\n    lower,\n    Upper,\n    ]\nvalue = 1\n"
+                     "module [\n    lower,\n    Upper,\n]\nvalue = 1\n"
+                     "module_exposes")
+                    ("module [\n    lower,\n    Upper,\n]\n    value = 1\n"
+                     "module [\n    lower,\n    Upper,\n]\nvalue = 1\n"
+                     "module_exposes")
+                    ("module [\n    lower,\n    Upper,\n]\nvalue = 1\n"
+                     "module [\n    lower,\n    Upper,\n]\nvalue = 1\n"
+                     "module_exposes")
+                    ("module [main]\nimport Foo exposing [\n    lower,\n    Upper,\n]\nvalue = 1\n"
+                     "module [main]\nimport Foo exposing [\n    lower,\n    Upper,\n]\nvalue = 1\n"
+                     "exposes_list")))
+      (with-temp-buffer
+        (insert (car case))
+        (roc-ts-mode)
+        (goto-char (point-min))
+        (search-forward "value = 1")
+        (search-backward "]")
+        (let* ((bracket (treesit-node-at (point)))
+               (parent (treesit-node-parent bracket)))
+          (should (equal (treesit-node-type bracket) "]"))
+          (should (equal (treesit-node-type parent) (nth 2 case))))
+        (indent-for-tab-command)
+        (should (= (current-indentation) 0))
+        (goto-char (point-min))
+        (search-forward "value = 1")
+        (beginning-of-line)
+        (let ((fallback-called nil)
+              (original-indent (symbol-function 'treesit-indent)))
+          (cl-letf (((symbol-function 'treesit-indent)
+                     (lambda (&rest args)
+                       (setq fallback-called t)
+                       (apply original-indent args))))
+            (indent-for-tab-command))
+          ;; After a module header, the normal mode rule must select the
+          ;; module_exposes condition rather than reach generic indentation.
+          (when (equal (nth 2 case) "module_exposes")
+            (should-not fallback-called)))
+        (should (equal (buffer-string) (nth 1 case)))))))
+
 (ert-deftest confirm-roc-ts-format ()
   "Check that the roc fmt command produces the same result.
 

@@ -148,7 +148,7 @@ If nil, use the value of `tab-width'."
 
 (add-to-list 'treesit-language-source-alist
              '(roc . ("https://github.com/Giesch/tree-sitter-roc/"
-                       "2026-10-13.01")))
+                       "2026-10-20.01")))
 
 ;;;###autoload
 (defun roc-ts-install-treesit-grammar ()
@@ -161,11 +161,17 @@ Uses `treesit-install-language-grammar'."
 ;;;; Private
 
 (defun roc-ts--fontify-inferred-associated-annotation (node override start end &rest _)
-  "Fontify NODE as a derive only when no matching definition follows.
-OVERRIDE, START, and END are passed to `treesit-fontify-with-override'."
-  (let* ((name (treesit-node-child (treesit-node-child node 0 t) 0 t))
+  "Fontify an inferred name as a derive unless its definition follows.
+NODE is the inferred annotation or its identifier.  OVERRIDE, START, and
+END are passed to `treesit-fontify-with-override'."
+  (let* ((annotation (if (equal (treesit-node-type node) "identifier")
+                         (treesit-node-parent (treesit-node-parent node))
+                       node))
+         (name (if (eq node annotation)
+                   (treesit-node-child (treesit-node-child node 0 t) 0 t)
+                 node))
          (text (treesit-node-text name t))
-         (next (treesit-node-next-sibling node t)))
+         (next (treesit-node-next-sibling annotation t)))
     (while (and next (member (treesit-node-type next)
                             '("line_comment" "doc_comment")))
       (setq next (treesit-node-next-sibling next t)))
@@ -547,7 +553,7 @@ This is assigned to an entry of `treesit-simple-indent-rules'.")
                             (and (or (equal (treesit-node-type node) "}")
                                      (equal (treesit-node-type node) "]"))
                                  (or (equal (treesit-node-type parent) "packages_list")
-                                     (equal (treesit-node-type parent) "exposes_list"))))
+                                     (equal (treesit-node-type parent) "module_exposes"))))
                            0))))))))
       (let ((position-within-line-text (- (point) (save-excursion (beginning-of-line-text) (point)))))
         (indent-line-to target-indent-level)
