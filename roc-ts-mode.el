@@ -210,7 +210,6 @@ END are passed to `treesit-fontify-with-override'."
     ;; - all top-level things
     ((parent-is "file") parent-bol 0)
     ;; - type annotations and the LHS of value declarations
-    ((n-p-gp ,(rx bos "annotation_type_def" eos) ,(rx bos "value_declaration" eos) nil) parent-bol 0)
     ((n-p-gp ,(rx bos "decl_left" eos) ,(rx bos "value_declaration" eos) nil) parent-bol 0)
     ;; - else, else if, then
     ((n-p-gp ,(rx bos (or "else" "else_if" "then") eos) "if_expr" nil) parent-bol 0)
@@ -326,16 +325,17 @@ This is assigned to an entry of `treesit-simple-indent-rules'.")
 
 (defvar roc-ts--ts-simple-imenu-settings
   `(("Definition" ,(rx bos "value_declaration" eos) nil nil)
+    ("Variable" ,(rx bos "var_declaration" eos) nil nil)
     ("Type alias" ,(rx bos "alias_type_def" eos) nil nil)
     ("Opaque type" ,(rx bos "opaque_type_def" eos) nil nil)
     ("Nominal type" ,(rx bos "nominal_type_def" eos) nil nil))
   "Rules for finding `imenu' entries in Roc code based on tree-sitter.")
 
 (defun roc-ts--ts-defun-p (node)
-  "Return non-nil if NODE is a value declaration or a top-level construct in Roc.
+  "Return non-nil if NODE is a declaration or a top-level construct in Roc.
 
 This is used as the `cdr' of `treesit-defun-type-regexp'."
-  (or (equal (treesit-node-type node) "value_declaration")
+  (or (member (treesit-node-type node) '("value_declaration" "var_declaration"))
       (string-match-p (rx "type_def") (treesit-node-type node))
       (equal (treesit-node-type (treesit-node-parent node)) "file")))
 
@@ -345,11 +345,24 @@ This is used as the `cdr' of `treesit-defun-type-regexp'."
 If NODE is not a defun or has no name, return nil.
 
 This is assigned to `treesit-defun-name-function'."
-  (cond
-   ((equal (treesit-node-type node) "value_declaration")
-    (treesit-node-text (treesit-node-child (car (treesit-filter-child node (lambda (n) (equal (treesit-node-type n) "decl_left")))) 0) 0))
-   ((string-match-p (rx "type_def") (treesit-node-type node))
-    (treesit-node-text (treesit-node-child (treesit-node-child node 0) 0)))))
+  (pcase (treesit-node-type node)
+    ("value_declaration"
+     (let* ((pattern (treesit-node-child-by-field-name node "pattern"))
+            (identifier (car (treesit-filter-child
+                              pattern
+                              (lambda (child)
+                                (equal (treesit-node-type child)
+                                       "identifier_pattern"))))))
+       (treesit-node-text (or identifier pattern) t)))
+    ("var_declaration"
+     (treesit-node-text (treesit-node-child-by-field-name node "name") t))
+    ((or "alias_type_def" "opaque_type_def" "nominal_type_def")
+     (let ((name (treesit-node-child-by-field-name node "name")))
+       (treesit-node-text
+        (car (treesit-filter-child
+              name (lambda (child)
+                     (equal (treesit-node-type child) "concrete_type"))))
+        t)))))
 
 (defun roc-ts--ts-setup ()
   "Setup Tree Sitter for the Roc mode."

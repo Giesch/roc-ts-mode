@@ -93,6 +93,48 @@ its first occurrence in the fixture."
     (search-forward needle)
     (get-text-property (match-beginning 0) 'face)))
 
+(ert-deftest roc-ts-defun-names ()
+  "Read declaration names without depending on child positions."
+  (dolist (case '(("f = |x| x" "value_declaration" "f")
+                  ("(a, b) = t" "value_declaration" "(a, b)")
+                  ("var n = 0" "var_declaration" "n")
+                  ("T : [A]" "alias_type_def" "T")
+                  ("Box(a) : List(a)" "alias_type_def" "Box")
+                  ("N := [B]" "nominal_type_def" "N")
+                  ("Secret(a) :: List(a)" "opaque_type_def" "Secret")
+                  ("f : U64 -> U64" "annotation_type_def" nil)))
+    (with-temp-buffer
+      (insert (car case) "\n")
+      (roc-ts-mode)
+      (let* ((root (treesit-buffer-root-node))
+             (node (car (treesit-filter-child
+                         root (lambda (child)
+                                (equal (treesit-node-type child) (nth 1 case)))))))
+        (should-not (treesit-search-subtree root "ERROR"))
+        (should node)
+        (should (roc-ts--ts-defun-p node))
+        (should (equal (roc-ts--ts-defun-name node) (nth 2 case)))))))
+
+(ert-deftest roc-ts-imenu-declarations ()
+  "Index declarations by category, without duplicate annotation entries."
+  (with-temp-buffer
+    (insert "f : U64 -> U64\nf = |x| x\nT : [A]\nN := [B]\n"
+            "Secret :: [C]\nrun = || {\nvar n = 0\nn\n}\n")
+    (roc-ts-mode)
+    (should-not (treesit-search-subtree (treesit-buffer-root-node) "ERROR"))
+    (let ((index (treesit-simple-imenu)))
+      (dolist (entry '(("Definition" "f") ("Variable" "n")
+                       ("Type alias" "T") ("Nominal type" "N")
+                       ("Opaque type" "Secret")))
+        (should (assoc (cadr entry) (cdr (assoc (car entry) index)))))
+      (should (= 1 (cl-count "f" (cdr (assoc "Definition" index))
+                             :key #'car :test #'equal))))
+    (let ((variable (treesit-search-subtree (treesit-buffer-root-node)
+                                            "var_declaration")))
+      (should (equal (treesit-node-type (treesit-node-parent variable))
+                     "body_expression"))
+      (should (roc-ts--ts-defun-p variable)))))
+
 (ert-deftest roc-ts-imenu-nominal-type ()
   "List nominal types by name in the imenu index."
   (with-temp-buffer
