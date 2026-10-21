@@ -171,7 +171,7 @@ its first occurrence in the fixture."
                       (cdr entry)))))))))
 
 (ert-deftest roc-ts-font-lock-method-calls ()
-  "Highlight called fields as functions, but leave field reads alone."
+  "Highlight called fields as functions and field reads as property uses."
   (with-temp-buffer
     (insert "parse = |input| {\n"
             "    parts = input.trim().split_on(\"\\n\")\n"
@@ -184,7 +184,7 @@ its first occurrence in the fixture."
       (dolist (entry '(("trim(" . font-lock-function-call-face)
                        ("split_on(" . font-lock-function-call-face)
                        ("get(" . font-lock-function-call-face)
-                       ("name\n" . font-lock-variable-use-face)))
+                       ("name\n" . font-lock-property-use-face)))
         (goto-char (point-min))
         (search-forward (car entry))
         (should (eq (get-text-property (match-beginning 0) 'face)
@@ -507,6 +507,8 @@ font-lock rules were ported to the new grammar."
         (dotimes (offset (length name))
           (should (eq (get-text-property (+ (match-beginning 0) offset) 'face)
                       'font-lock-function-name-face)))
+        (should-not (eq (get-text-property (+ (match-beginning 0) (length name)) 'face)
+                        'font-lock-function-name-face))
         (search-forward "_")
         (should-not (eq (get-text-property (1- (point)) 'face)
                         'font-lock-function-name-face))))))

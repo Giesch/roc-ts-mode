@@ -9,6 +9,34 @@ Roc is a strongly typed functional programming language inspired by Elm, but for
 
 This code is an early work in progress and I am a novice at Emacs Lisp. Polite suggestions and contributions are welcome.
 
+* Generated highlighting queries
+
+The font-lock queries embedded in ~roc-ts-queries.el~ come from the
+~queries-generated/emacs/queries/highlights.scm~ file in tree-sitter-roc tag
+~2026-10-20.02~. Keep that tag in step with the Roc grammar pin in
+~roc-ts-mode.el~. To regenerate from a checkout of that exact tag, evaluate
+this in Emacs from the ~roc-ts-mode~ checkout (replace the grammar checkout
+path with your own):
+
+#+begin_src emacs-lisp :noeval
+(load (expand-file-name "scripts/sync-queries.el" default-directory) nil t t)
+(roc-ts-sync-queries
+ (expand-file-name "queries-generated/emacs/queries/highlights.scm"
+                   "/path/to/tree-sitter-roc/")
+ (expand-file-name "roc-ts-queries.el" default-directory)
+ "2026-10-20.02")
+#+end_src
+
+The script checks the tag against the pin and verifies that the source bytes
+match the tagged Git file before writing. The embedded sections keep their
+source order, including repeated features. Generated queries assign only
+faces; ~roc-ts-mode.el~ adds one final ~definition-names~ override for
+inferred associated annotations, refining recognized derived-method names
+without coloring their type annotations. In the generated section order,
+record field reads such as ~input.name~ receive
+~font-lock-property-use-face~ rather than the previous variable-use face;
+called fields continue to receive ~font-lock-function-call-face~.
+
 * Install
 
 ~roc-ts-mode~ is [[https://melpa.org/#/roc-ts-mode][available on MELPA]].

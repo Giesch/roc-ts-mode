@@ -38,6 +38,7 @@
 (require 'treesit)
 (require 'hideshow)
 (require 'newcomment)
+(require 'roc-ts-queries)
 
 ;;;; Custom variables
 
@@ -148,7 +149,7 @@ If nil, use the value of `tab-width'."
 
 (add-to-list 'treesit-language-source-alist
              '(roc . ("https://github.com/Giesch/tree-sitter-roc/"
-                       "2026-10-20.01")))
+                       "2026-10-20.02")))
 
 ;;;###autoload
 (defun roc-ts-install-treesit-grammar ()
@@ -191,243 +192,6 @@ END are passed to `treesit-fontify-with-override'."
       (treesit-fontify-with-override
        (treesit-node-start name) (treesit-node-end name)
        face override start end))))
-
-(defun roc-ts--fontify-tag-type (node override start end &rest _)
-  "Fontify only the constructor name of a tag type NODE."
-  (let* ((name-start (treesit-node-start node))
-         (first-child (treesit-node-child node 0))
-         (name-end (if first-child
-                       (treesit-node-start first-child)
-                     (treesit-node-end node))))
-    (treesit-fontify-with-override
-     name-start name-end 'font-lock-builtin-face override start end)))
-
-(defun roc-ts--fontify-question-mark (node override start end &rest _)
-  "Fontify NODE as an early return when its text is a single question mark.
-OVERRIDE, START, and END are passed to `treesit-fontify-with-override'."
-  (when (equal (treesit-node-text node) "?")
-    (treesit-fontify-with-override
-     (treesit-node-start node) (treesit-node-end node)
-     'roc-ts-question-mark-face override start end)))
-
-(defvar roc-ts--ts-font-lock-rules
-  '(:language roc
-    :override t
-    :feature comments
-    ((line_comment) @font-lock-comment-face
-     (doc_comment) @font-lock-comment-face)
-
-    :language roc
-    :override t
-    :feature doc-comments
-    ((doc_comment) @font-lock-doc-face)
-
-    ;; https://www.roc-lang.org/tutorial#reserved-keywords
-    :language roc
-    :override t
-    :feature keywords
-    ((where) @font-lock-keyword-face
-     (exposing) @font-lock-keyword-face
-     (match) @font-lock-keyword-face
-     "if" @font-lock-keyword-face
-     "else" @font-lock-keyword-face
-     "for" @font-lock-keyword-face
-     "in" @font-lock-keyword-face
-     "while" @font-lock-keyword-face
-     (break_expr) @font-lock-keyword-face
-     "crash" @roc-ts-crash-face
-     "var" @font-lock-keyword-face
-     "return" @font-lock-keyword-face
-     "as" @font-lock-keyword-face
-     (as) @font-lock-keyword-face
-     "dbg" @font-lock-keyword-face
-     "expect" @font-lock-keyword-face
-     "app" @font-lock-keyword-face
-     "package" @font-lock-keyword-face
-     "platform" @font-lock-keyword-face
-     "module" @font-lock-keyword-face
-     "exposes" @font-lock-keyword-face
-     "import" @font-lock-keyword-face
-     "packages" @font-lock-keyword-face
-     "requires" @font-lock-keyword-face
-     "provides" @font-lock-keyword-face)
-
-    :language roc
-    :override t
-    :feature strings
-    ((string) @font-lock-string-face
-     (multiline_string) @font-lock-string-face
-     (package_uri) @font-lock-string-face)
-
-    :language roc
-    :override t
-    :feature types
-    ((concrete_type) @font-lock-type-face
-     (inferred) @font-lock-type-face)
-
-    :language roc
-    :override t
-    :feature type-variables
-    ((bound_variable) @font-lock-type-face)
-
-    :language roc
-    :override t
-    :feature tag-types
-    ((tags_type
-      (tag_type) @roc-ts--fontify-tag-type))
-
-    :language roc
-    :override t
-    :feature numbers
-    ((int) @font-lock-number-face
-     (xint) @font-lock-number-face
-     (float) @font-lock-number-face
-     (number_with_suffix) @font-lock-number-face
-     (negative_number) @font-lock-number-face)
-
-    :language roc
-    :override t
-    :feature record-field-declaration
-    ((field_name) @font-lock-property-name-face)
-
-    :language roc
-    :override t
-    :feature record-field-access
-    ((field_access_expr
-      target: (variable_expr (identifier))
-      (identifier) @font-lock-property-use-face))
-
-    :language roc
-    :override t
-    :feature variable-use
-    ((identifier) @font-lock-variable-use-face
-     (ident) @font-lock-variable-use-face) ;; TODO: What's the difference?
-
-    :language roc
-    :override t
-    :feature function-calls
-    ((function_call_pnc_expr
-      caller: (variable_expr (identifier) @font-lock-function-call-face))
-     (function_call_pnc_expr
-      caller: (field_access_expr
-               (identifier) @font-lock-function-call-face)))
-
-    :language roc
-    :override t
-    :feature definition-names
-    ((annotation_pre_colon) @font-lock-variable-name-face
-     (decl_left
-      (identifier_pattern
-       (identifier) @font-lock-variable-name-face))
-     (decl_left
-      (tuple_pattern
-       (identifier_pattern
-        (identifier) @font-lock-variable-name-face)))
-     (decl_left
-      (tag_pattern
-       args: (identifier_pattern
-              (identifier) @font-lock-variable-name-face)))
-     (decl_left
-      (nominal_constructor_pattern
-       (identifier_pattern
-        (identifier) @font-lock-variable-name-face)))
-     (var_declaration
-      name: (identifier) @font-lock-variable-name-face))
-
-    :language roc
-    :override t
-    :feature definition-names
-    ((inferred_associated_annotation) @roc-ts--fontify-inferred-associated-annotation
-     (annotation_type_def
-      (annotation_pre_colon (identifier) @font-lock-function-name-face)
-      (function_type))
-     (annotation_type_def
-      (annotation_pre_colon (identifier) @font-lock-function-name-face)
-      (where_implements type: (function_type)))
-     (value_declaration
-      (decl_left
-       (identifier_pattern (identifier) @font-lock-function-name-face))
-      body: (expr_body (anon_fun_expr))))
-
-    :language roc
-    :override t
-    :feature tags
-    ((tag) @font-lock-builtin-face)
-
-    :language roc
-    :override t
-    :feature types
-    ((nominal_constructor_expr
-      (tag (identifier) @font-lock-type-face))
-     (nominal_constructor_pattern
-      (tag (identifier) @font-lock-type-face)))
-
-    :language roc
-    :override t
-    :feature modules
-    ((module) @font-lock-constant-face)
-
-    :language roc
-    :override t
-    :feature operators
-    ((operator) @font-lock-operator-face)
-
-    :language roc
-    :override t
-    :feature early-return
-    ((suffix_operator) @roc-ts-question-mark-face
-     (operator) @roc-ts--fontify-question-mark)
-
-    :language roc
-    :override t
-    :feature delimiters
-    ("," @font-lock-delimiter-face)
-
-    :language roc
-    :override t
-    :feature brackets
-    ("[" @font-lock-bracket-face
-     "]" @font-lock-bracket-face
-     "{" @font-lock-bracket-face
-     "}" @font-lock-bracket-face
-     "(" @font-lock-bracket-face
-     ")" @font-lock-bracket-face)
-
-    ;; must be after brackets feature (because should be prioritized over brackets)
-    :language roc
-    :override t
-    :feature string-escapes
-    ((escape_char) @font-lock-escape-face
-     (interpolation_char
-      "${" @font-lock-escape-face
-      "}" @font-lock-escape-face))
-
-    :language roc
-    :override t
-    :feature arrows
-    ((arrow) @font-lock-misc-punctuation-face
-     (fat_arrow) @font-lock-misc-punctuation-face)
-
-    :language roc
-    :override t
-    :feature lambdas
-    ("|" @font-lock-misc-punctuation-face)
-
-    :language roc
-    :override t
-    :feature assignments
-    ((value_declaration "=" @font-lock-misc-punctuation-face))
-
-    ;; The grammar can parse otherwise valid Roc syntax as ERROR.  Keep the
-    ;; affected text in the default face instead of a misleading type face.
-    :language roc
-    :override t
-    :feature errors
-    ((ERROR) @default))
-  "The rules for syntax highlighting Roc code based on tree-sitter.
-
-This is passed to `treesit-font-lock-rules' and assigned to
-`treesit-font-lock-settings' in `roc-ts--ts-setup'.")
 
 (defun roc-ts--indent-offset (&rest _)
   (or roc-ts-indent-offset
@@ -590,10 +354,19 @@ This is assigned to `treesit-defun-name-function'."
 (defun roc-ts--ts-setup ()
   "Setup Tree Sitter for the Roc mode."
 
-  ;; TODO: There is a highlight.scm file in the tree-sitter-roc codebase. How can I use it?
-
   (setq-local treesit-font-lock-settings
-              (apply #'treesit-font-lock-rules roc-ts--ts-font-lock-rules))
+              (apply #'treesit-font-lock-rules
+                     (append
+                      (mapcan
+                       (lambda (section)
+                         (list :language 'roc :override t
+                               :feature (car section) (cdr section)))
+                       roc-ts--generated-font-lock-queries)
+                      (list :language 'roc :override t
+                            :feature 'definition-names
+                            '((inferred_associated_annotation
+                               name: (annotation_pre_colon
+                                      (identifier) @roc-ts--fontify-inferred-associated-annotation)))))))
 
   (setq-local treesit-font-lock-feature-list
               '((comments doc-comments definition-names)
