@@ -187,6 +187,26 @@ its first occurrence in the fixture."
       (should (eq (get-text-property (match-beginning 0) 'face)
                   (cdr entry))))))
 
+(ert-deftest roc-ts-font-lock-constraint-alias-references ()
+  "Highlight constraint alias names as types without parser recovery."
+  (with-temp-buffer
+    (insert "item.Eq : where [item.is_eq : item, item -> Bool]\n"
+            "item.Hash : where [item.to_hash : item, Hasher -> Hasher]\n"
+            "powerset : List(item) -> Iter(Set(item))\n"
+            "    where [item.Eq, item.Hash]\n")
+    (roc-ts-mode)
+    (should-not (treesit-search-subtree
+                 (treesit-buffer-root-node 'roc) "ERROR"))
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (while (re-search-forward "item\\.\\(Eq\\|Hash\\)" nil t)
+      (let ((start (match-beginning 1))
+            (end (match-end 1)))
+        (while (< start end)
+          (should (eq (get-text-property start 'face)
+                      'font-lock-type-face))
+          (setq start (1+ start)))))))
+
 (ert-deftest roc-ts-font-lock-effectful-function-calls ()
   "Use normal function faces for effectful declarations and calls."
   (with-temp-buffer
