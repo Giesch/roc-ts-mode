@@ -37,6 +37,12 @@ record field reads such as ~input.name~ receive
 ~font-lock-property-use-face~ rather than the previous variable-use face;
 called fields continue to receive ~font-lock-function-call-face~.
 
+Exposing lists use type styling for uppercase names and namespace styling
+for qualified prefixes. Lowercase exposed names retain the variable-use face:
+syntax alone cannot distinguish imported functions from other values. The
+same convention applies to module export lists, aliases, and wildcards.
+These refinements live in ~roc-ts-mode.el~ after the generated queries.
+
 * Install
 
 ~roc-ts-mode~ is [[https://melpa.org/#/roc-ts-mode][available on MELPA]].

@@ -207,6 +207,131 @@ its first occurrence in the fixture."
                       'font-lock-type-face))
           (setq start (1+ start)))))))
 
+(defun roc-ts-mode-test--assert-face (text face &optional start)
+  "Assert FACE on every character of TEXT at or after START.
+START defaults to the beginning of the buffer."
+  (save-excursion
+    (goto-char (or start (point-min)))
+    (search-forward text)
+    (let ((start (match-beginning 0)))
+      (dotimes (offset (length text))
+        (ert-info ((format "%S character %d" text offset))
+          (should (eq (get-text-property (+ start offset) 'face) face)))))))
+
+(ert-deftest roc-ts-font-lock-exposed-values-functions-and-types ()
+  "Style exposed types without guessing whether lowercase names are functions.
+Even a locally defined function uses the exposed-variable face in the header;
+its definition and calls retain their independently determined function faces."
+  (dolist (source '("module [main]\nimport pf.Gui exposing [value, render!, Action]\nmain = render!(value)\n"
+                    "module [value, render!, Action]\nvalue = 42\nrender! = |state| state\nAction := [None].{}\nmain = render!(value)\n"))
+    (with-temp-buffer
+      (insert source)
+      (let ((treesit-font-lock-level 4))
+        (roc-ts-mode))
+      (font-lock-ensure)
+      (should-not (treesit-search-subtree (treesit-buffer-root-node 'roc) "ERROR"))
+      (dolist (entry '(("value" . font-lock-variable-use-face)
+                       ("render!" . font-lock-variable-use-face)
+                       ("Action" . font-lock-type-face)))
+        (roc-ts-mode-test--assert-face (car entry) (cdr entry)))
+      (goto-char (point-min))
+      (search-forward "main = render!")
+      (should (eq (get-text-property (1- (point)) 'face)
+                  'font-lock-function-call-face))
+      (when (string-match-p "render! =" source)
+        (goto-char (point-min))
+        (search-forward "render! =")
+        (should (eq (get-text-property (- (point) (length "render! =")) 'face)
+                    'font-lock-function-name-face))))))
+
+(ert-deftest roc-ts-font-lock-rich-exposed-names ()
+  "Keep exposed-name faces on leaves, preserving namespaces and punctuation."
+  (dolist (header '("module [%s]\nmain = 0\n"
+                    "module [main]\nimport pf.Gui as G exposing [%s]\nmain = 0\n"))
+    (dolist (case '(("value as renamed"
+                     ("value" . font-lock-variable-use-face)
+                     ("renamed" . font-lock-variable-use-face)
+                     ("as" . font-lock-keyword-face))
+                    ("render! as draw!"
+                     ("render!" . font-lock-variable-use-face)
+                     ("draw!" . font-lock-variable-use-face))
+                    ("Action as Message"
+                     ("Action" . font-lock-type-face)
+                     ("Message" . font-lock-type-face))
+                    ("Outer.Inner.Action"
+                     ("Outer" . font-lock-constant-face)
+                     ("Inner" . font-lock-constant-face)
+                     ("Action" . font-lock-type-face))
+                    ("Outer.value.Deep.render!"
+                     ("Outer" . font-lock-constant-face)
+                     ("value" . font-lock-variable-use-face)
+                     ("Deep" . font-lock-constant-face)
+                     ("render!" . font-lock-variable-use-face))
+                    ("Outer.Action as Message"
+                     ("Outer" . font-lock-constant-face)
+                     ("Action" . font-lock-type-face)
+                     ("Message" . font-lock-type-face))
+                    ("Outer.render! as Alias"
+                     ("Outer" . font-lock-constant-face)
+                     ("render!" . font-lock-variable-use-face)
+                     ("Alias" . font-lock-type-face))
+                    ("Action.*"
+                     ("Action" . font-lock-type-face)
+                     (".*" . font-lock-operator-face))
+                    ("Outer.Action.*"
+                     ("Outer" . font-lock-constant-face)
+                     ("Action" . font-lock-type-face)
+                     (".*" . font-lock-operator-face))
+                    ("Outer.value.*"
+                     ("Outer" . font-lock-constant-face)
+                     ("value" . font-lock-variable-use-face)
+                     (".*" . font-lock-operator-face))))
+      (ert-info ((format "%s: %s" header (car case)))
+        (with-temp-buffer
+          (insert (format header (car case)))
+          (let ((treesit-font-lock-level 4))
+            (roc-ts-mode))
+          (font-lock-ensure)
+          (should-not (treesit-search-subtree (treesit-buffer-root-node 'roc) "ERROR"))
+          (goto-char (point-min))
+          (search-forward (car case))
+          (let ((item-start (match-beginning 0)))
+            (dolist (entry (cdr case))
+              (roc-ts-mode-test--assert-face (car entry) (cdr entry) item-start)))
+          (when (string-match-p "import" header)
+            (roc-ts-mode-test--assert-face "Gui" 'font-lock-constant-face)
+            (goto-char (point-min))
+            (search-forward "as G")
+            (should (eq (get-text-property (1- (point)) 'face)
+                        'font-lock-constant-face)))
+          (goto-char (point-min))
+          (while (search-forward "." nil t)
+            (should (eq (get-text-property (1- (point)) 'face)
+                        'font-lock-operator-face))))))))
+
+(ert-deftest roc-ts-font-lock-exposed-types-levels-and-edits ()
+  "Apply the type feature at levels 2–4 and discard stale faces after edits."
+  (dolist (level '(2 3 4))
+    (with-temp-buffer
+      (insert "module [main]\nimport pf.Gui exposing [\n    Action, # Action comment\n]\nmain = \"Action string\"\n")
+      (let ((treesit-font-lock-level level))
+        (roc-ts-mode))
+      (font-lock-ensure)
+      (should-not (treesit-search-subtree (treesit-buffer-root-node 'roc) "ERROR"))
+      (roc-ts-mode-test--assert-face "Action" 'font-lock-type-face)
+      (roc-ts-mode-test--assert-face "Action comment" 'font-lock-comment-face)
+      (roc-ts-mode-test--assert-face "Action string" 'font-lock-string-face)
+      (goto-char (point-min))
+      (search-forward "Action")
+      (replace-match "action" t t)
+      (font-lock-ensure)
+      (roc-ts-mode-test--assert-face "action" (and (= level 4) 'font-lock-variable-use-face))
+      (goto-char (point-min))
+      (search-forward "action")
+      (replace-match "Action" t t)
+      (font-lock-ensure)
+      (roc-ts-mode-test--assert-face "Action" 'font-lock-type-face))))
+
 (ert-deftest roc-ts-font-lock-effectful-function-calls ()
   "Use normal function faces for effectful declarations and calls."
   (with-temp-buffer

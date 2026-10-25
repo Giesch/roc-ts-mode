@@ -379,7 +379,30 @@ This is assigned to `treesit-defun-name-function'."
                             :feature 'definition-names
                             '((inferred_associated_annotation
                                name: (annotation_pre_colon
-                                      (identifier) @roc-ts--fontify-inferred-associated-annotation)))))))
+                                      (identifier) @roc-ts--fontify-inferred-associated-annotation)))
+                            ;; The shared exposed-name capture treats every name
+                            ;; as a variable use.  Restore type styling for
+                            ;; uppercase names, keeping qualified prefixes as
+                            ;; namespaces.  Lowercase functions and values have
+                            ;; identical syntax here; distinguishing them needs
+                            ;; semantic information.
+                            :language 'roc :override t :feature 'types
+                            '((import_expr
+                               exposing: (exposes_list
+                                          (ident (module) @font-lock-type-face)))
+                              (module_header
+                               (module_exposes
+                                (ident (module) @font-lock-type-face)))
+                              (qualified_exposed_name
+                               (module) @font-lock-constant-face)
+                              (qualified_exposed_name
+                               segment: (module) @font-lock-type-face :anchor)
+                              (renamed_exposed_item
+                               name: (module) @font-lock-type-face)
+                              (renamed_exposed_item
+                               alias: (module) @font-lock-type-face)
+                              (wildcard_exposed_item
+                               name: (module) @font-lock-type-face))))))
 
   (setq-local treesit-font-lock-feature-list
               '((comments doc-comments definition-names)
