@@ -42,6 +42,9 @@ for qualified prefixes. Lowercase exposed names retain the variable-use face:
 syntax alone cannot distinguish imported functions from other values. The
 same convention applies to module export lists, aliases, and wildcards.
 These refinements live in ~roc-ts-mode.el~ after the generated queries.
+Dependency aliases in app and package headers, and package prefixes in imports
+such as ~pf~ in ~import pf.Gui~, use the namespace face
+(~font-lock-constant-face~) at font-lock level 4.
 
 * Install
 

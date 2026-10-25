@@ -218,6 +218,49 @@ START defaults to the beginning of the buffer."
         (ert-info ((format "%S character %d" text offset))
           (should (eq (get-text-property (+ start offset) 'face) face)))))))
 
+(ert-deftest roc-ts-font-lock-package-namespaces ()
+  "Style dependency aliases as namespaces without coloring their payloads."
+  (dolist (header '("app [main] { pf: platform \"gui.tar.zst\", util: \"util.tar.zst\", }\n"
+                    "package [Main] { util: \"util.tar.zst\", }\n"))
+    (with-temp-buffer
+      (insert header
+              "import util.Helpers\n"
+              "import Local as Alias\n"
+              "main = util\n")
+      (let ((treesit-font-lock-level 4))
+        (roc-ts-mode))
+      (font-lock-ensure)
+      (should-not (treesit-search-subtree (treesit-buffer-root-node 'roc) "ERROR"))
+      (when (string-prefix-p "app" header)
+        (roc-ts-mode-test--assert-face "pf" 'font-lock-constant-face)
+        (roc-ts-mode-test--assert-face "platform" 'font-lock-keyword-face)
+        (roc-ts-mode-test--assert-face "\"gui.tar.zst\"" 'font-lock-string-face))
+      (roc-ts-mode-test--assert-face "util" 'font-lock-constant-face)
+      (roc-ts-mode-test--assert-face "\"util.tar.zst\"" 'font-lock-string-face)
+      (roc-ts-mode-test--assert-face ":" 'font-lock-delimiter-face)
+      (roc-ts-mode-test--assert-face "," 'font-lock-delimiter-face)
+      (roc-ts-mode-test--assert-face "{" 'font-lock-bracket-face)
+      (roc-ts-mode-test--assert-face "}" 'font-lock-bracket-face)
+      (goto-char (point-min))
+      (search-forward "import ")
+      (roc-ts-mode-test--assert-face "util" 'font-lock-constant-face (point))
+      (roc-ts-mode-test--assert-face "." 'font-lock-operator-face (point))
+      (roc-ts-mode-test--assert-face "Helpers" 'font-lock-constant-face)
+      (roc-ts-mode-test--assert-face "Local" 'font-lock-constant-face)
+      (roc-ts-mode-test--assert-face "Alias" 'font-lock-constant-face)
+      (search-forward "main = ")
+      (roc-ts-mode-test--assert-face "util" 'font-lock-variable-use-face (point))))
+  (with-temp-buffer
+    (insert "app [main] { pf: platform \"gui.tar.zst\" }\nimport pf.Gui\nmain = 0\n")
+    (let ((treesit-font-lock-level 4))
+      (roc-ts-mode))
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "pf:")
+    (replace-match "gui:" t t)
+    (font-lock-ensure)
+    (roc-ts-mode-test--assert-face "gui" 'font-lock-constant-face)))
+
 (ert-deftest roc-ts-font-lock-exposed-values-functions-and-types ()
   "Style exposed types without guessing whether lowercase names are functions.
 Even a locally defined function uses the exposed-variable face in the header;

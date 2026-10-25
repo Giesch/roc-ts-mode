@@ -376,6 +376,14 @@ This is assigned to `treesit-defun-name-function'."
                                :feature (car section) (cdr section)))
                        roc-ts--generated-font-lock-queries)
                       (list :language 'roc :override t
+                            :feature 'modules
+                            ;; Dependency aliases introduce package namespaces.
+                            ;; Capture only the name, preserving the keyword,
+                            ;; URL, and punctuation faces around it.
+                            '((platform_ref (identifier) @font-lock-constant-face)
+                              (package_ref (identifier) @font-lock-constant-face)
+                              (import_ident (identifier) @font-lock-constant-face))
+                            :language 'roc :override t
                             :feature 'definition-names
                             '((inferred_associated_annotation
                                name: (annotation_pre_colon
