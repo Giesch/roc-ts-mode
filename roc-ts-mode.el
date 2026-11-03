@@ -149,7 +149,7 @@ If nil, use the value of `tab-width'."
 
 (add-to-list 'treesit-language-source-alist
              '(roc . ("https://github.com/Giesch/tree-sitter-roc/"
-                       "2026-10-23.03")))
+                       "2026-11-02.01")))
 
 ;;;###autoload
 (defun roc-ts-install-treesit-grammar ()
